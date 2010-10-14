@@ -25,12 +25,12 @@ while(<STDIN>){
 close TMP;
 
 my $gpcfg="";
-(my $bg,my $blk,my $hist,my $col2,my $col3,my $eps)=(0,0,0,0,0,0);
+(my $nbg,my $blk,my $hist,my $col2,my $col3,my $eps)=(0,0,0,0,0,0);
 (my $size,my $png)=("","","");
 my $outbase="plot";
 while(1){
 	if   ($ARGV[0]eq"-h"     ){ shift; &usage();       }
-	elsif($ARGV[0]eq"-bg"    ){ shift; $bg     =1;     }
+	elsif($ARGV[0]eq"-nbg"   ){ shift; $nbg    =1;     }
 	elsif($ARGV[0]eq"-blk"   ){ shift; $blk    =1;     }
 	elsif($ARGV[0]eq"-blkw"  ){ shift; $blk=1; $gpcfg.="set boxwidth ".(shift)." absolute\n"; }
 	elsif($ARGV[0]eq"-hist"  ){ shift; $hist   =1;     }
@@ -54,7 +54,7 @@ $gpcfg.=$size if ""ne$size && ($png || $eps);
 
 sub usage {
 	print "Usage: $0 {Options} {COLNAME}\n";
-	print "  -bg             background mode (detach from terminal)\n";
+	print "  -nbg            no background mode (donot detach from terminal)\n";
 	print "  -blk            use blocks instead of lines\n";
 	print "  -blkw NUM       set absolute block width (implies -blk)\n";
 	print "  -2              use two colums of data (x,y-values) - normaly x-values are read from the first column\n";
@@ -89,6 +89,7 @@ if($blk){
 }else{
 	$with="lines";
 }
+$dem.=$gpcfg;
 if($eps){
 	$dem.="set term postscript eps color\n";
 	$dem.="set output \"".$outbase.".eps\"\n";
@@ -97,7 +98,6 @@ if($png){
 	$dem.="set term png size ".$png."\n";
 	$dem.="set output \"".$outbase.".png\"\n";
 }
-$dem.=$gpcfg;
 $dem.="plot";
 my $ncol = 1+$col2+$col3; # number of colums per line
 my $col  = $col2 ? 0 : 1; # first column
@@ -105,6 +105,7 @@ my $ls   = 1;
 while($col<$maxnum){
 	my $title = shift;
 	my $using = ($col2 ? ++$col : 1);
+	#$with="points" if $col>3;
 	$using.=":".(++$col);
 	$using.=":".(++$col) if $col3;
 	$dem.=" \"".$tmpdat."\" using ".$using;
@@ -114,15 +115,15 @@ while($col<$maxnum){
 	$dem.=",";
 }
 $dem=~s/,$//; $dem.="\n";
-#$dem.="pause mouse\n";
+$dem.="pause mouse\n";
 open GP,">".$tmpdem;
 print GP $dem;
 close GP;
 #print $dem;
 
-exit if $bg && fork()>0;
+exit if !$nbg && fork()!=0;
 
-system "gnuplot -persist ".$tmpdem;
+system "gnuplot ".$tmpdem;
 
 unlink $tmpdat;
 unlink $tmpdem;
@@ -154,7 +155,7 @@ sub readcolors {
 	my $gp="";
 	my $c=1;
 	foreach my $color (split /,/,$colors){
-		$gp.="set style line ".($c++)." lt rgb \"#".$color."\"\n";
+		$gp.="set style line ".($c++)." lt 1 lc rgb \"#".$color."\"\n";
 	}
 	return $gp;
 }
