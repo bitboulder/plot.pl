@@ -38,6 +38,7 @@ my $tmptxt=&hlp::gettmp("txt");
 open FD,">".$tmpxtp;
 print FD $ftyp." o;\n";
 print FD "\"".$fdata."\" o -restore;\n";
+print FD $ffld." ' ' ".$ffld." =;\n"; # TODO remove non-numeric components
 print FD "\"".$tmptxt."\" \"ascii\" ".$ffld." stdfile -export\n";
 print FD "quit;\n";
 close FD;

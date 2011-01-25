@@ -17,7 +17,7 @@ my $tmpdem=&hlp::gettmp("dem");
 my $maxnum=0;
 
 my $gpcfg="";
-(my $nbg,my $blk,my $hist,my $colxy,my $coln,my $eps)=(0,0,0,0,1,0);
+(my $nbg,my $blk,my $img,my $hist,my $colxy,my $coln,my $eps)=(0,0,0,0,0,1,0);
 (my $size,my $png)=("","","");
 my $multiplot=-1;
 my $outbase="plot";
@@ -27,6 +27,7 @@ while(1){
 	elsif($ARGV[0]eq"-blk"      ){ shift; $blk    =1;       }
 	elsif($ARGV[0]eq"-blke"     ){ shift; $blk    =2;       }
 	elsif($ARGV[0]eq"-blkw"     ){ shift; $blk=$blk?$blk:1; $gpcfg.="set boxwidth ".(shift)." absolute\n"; }
+	elsif($ARGV[0]eq"-img"      ){ shift; $img=1; $coln=0; }
 	elsif($ARGV[0]eq"-hist"     ){ shift; $hist   =1;       }
 	elsif($ARGV[0]eq"-xy"       ){ shift; $colxy  =1;       }
 	elsif($ARGV[0]eq"-nox"      ){ shift; $colxy  =-1;      }
@@ -38,7 +39,10 @@ while(1){
 	elsif($ARGV[0]eq"-yrange"   ){ shift; $gpcfg .="set yrange [".(shift)."]\n"; }
 	elsif($ARGV[0]eq"-xgrid"    ){ shift; $gpcfg .="set grid xtics\n"; }
 	elsif($ARGV[0]eq"-ygrid"    ){ shift; $gpcfg .="set grid ytics\n"; }
-	elsif($ARGV[0]eq"-xtics"    ){ shift; $gpcfg .=&readxtics(shift); }
+	elsif($ARGV[0]eq"-xtics"    ){ shift; $gpcfg .=&readtics("xtics",shift); }
+	elsif($ARGV[0]eq"-ytics"    ){ shift; $gpcfg .=&readtics("ytics",shift); }
+	elsif($ARGV[0]eq"-xlabel"   ){ shift; $gpcfg .="set xlabel \"".(shift)."\"\n"; }
+	elsif($ARGV[0]eq"-ylabel"   ){ shift; $gpcfg .="set ylabel \"".(shift)."\"\n"; }
 	elsif($ARGV[0]eq"-size"     ){ shift; $size  .="set size ".(shift)."\n"; }
 	elsif($ARGV[0]eq"-xsize"    ){ shift; $gpcfg .="set terminal x11 size ".(shift)."\n"; }
 	elsif($ARGV[0]eq"-color"    ){ shift; $gpcfg .=&readcolors(shift); }
@@ -71,6 +75,8 @@ while(<STDIN>){
 }
 close TMP;
 
+$blk=0 if $img;
+$coln=$maxnum if !$coln;
 $gpcfg.=$size if ""ne$size && ($png || $eps);
 $nbg=1 if $png || $eps;
 $multiplot=$maxnum if $multiplot<0;
@@ -83,13 +89,17 @@ sub usage {
 	print "  -blk            use blocks instead of lines\n";
 	print "  -blke           use blocks with error bars\n";
 	print "  -blkw NUM       set absolute block width (implies -blk)\n";
+	print "  -img            image drawing mode (for sonagram,confusion matrix,...)\n";
 	print "  -xy             use two colums of data (x,y-values) - normaly x-values are read from the first column\n";
 	print "  -nox            there is no x-column in data - use line number\n";
 	print "  -col N          use N data columns (for block width in -blk mode, or err-bar in -blke)\n";
 	print "  -multiplot N    use every N columns for a new subplot\n";
 	print "  -xrange MIN:MAX define x-axis range\n";
 	print "  -yrange MIN:MAX define y-axis range\n";
-	print "  -xtics [P:]L,...places labels L at position P (\"0.5:hallo,0.8:welt\" or \"hallo,welt\")\n";
+	print "  -xtics [P:]L,...\n";
+	print "  -ytics [P:]L,...places labels L at position P (\"0.5:hallo,0.8:welt\" or \"hallo,welt\")\n";
+	print "  -xlabel TXT     label for x-axis\n";
+	print "  -ylabel TXT     label for y-axis\n";
 	print "  -xgrid          x-axis grid\n";
 	print "  -ygrid          y-axis grid\n";
 	print "  -size W,H       set size of drawing (for png/eps)\n";
@@ -119,6 +129,7 @@ if($blk){
 }else{
 	$with="lines";
 }
+$with="image" if $img;
 $dem.=$gpcfg;
 if($eps){
 	$dem.="set term postscript eps color\n";
@@ -158,10 +169,12 @@ while($col<$maxnum){
   	my $using = ($colxy ? ++$col : 1);
   	#$with="points" if $col>3;
     for(my $i=0;$i<$coln;$i++){ $using.=":".(++$col); }
-  	$dem.=" \"".$tmpdat."\" using ".$using;
+  	$dem.=" \"".$tmpdat."\"";
+	$dem.=" matrix" if $img;
+	$dem.=" using ".$using if !$img;
   	$dem.=" title \"".$title."\"" if $title ne "";
   	$dem.=" with ".$with if $with ne "";
-  	$dem.=" ls ".($ls++);
+  	$dem.=" ls ".($ls++) if !$img;
   	$dem.=",";
     $scol++;
   }
@@ -193,11 +206,11 @@ sub readfile {
 	return $dat;
 }
 
-sub readxtics {
-	my $xtics=shift;
-	my $gp="set xtics (";
+sub readtics {
+	(my $name,my $tics)=@_;
+	my $gp="set ".$name." (";
 	my $i=0;
-	foreach my $xtic (split /,/,$xtics){
+	foreach my $xtic (split /,/,$tics){
 		(my $pos,my $lab)=split /:/,$xtic,2;
 		if($xtic!~/:/){ $lab=$pos; $pos=$i; }
 		$gp.="'".$lab."' ".$pos.",";
