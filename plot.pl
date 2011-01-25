@@ -6,28 +6,10 @@ my $tmpdat="/tmp/plot.pl.$$.dat";
 my $tmpdem="/tmp/plot.pl.$$.dem";
 my $maxnum=0;
 
-open TMP,">".$tmpdat;
-while(<STDIN>){
-	print TMP $_;
-	if($_=~/^(.*)#(.*)$/){
-		$_=$1;
-		foreach(split / +/,$2){
-			$_=~s/__/ /g;
-			push @ARGV,$_;
-		}
-	}
-	$_=~s/^ +//g;
-	$_=~s/ +$//g;
-	next if ""eq$_;
-	my $num=split / +/,$_;
-	$maxnum=$num if $maxnum<$num;
-}
-close TMP;
-
 my $gpcfg="";
 (my $nbg,my $blk,my $hist,my $colxy,my $coln,my $eps)=(0,0,0,0,1,0);
 (my $size,my $png)=("","","");
-my $multiplot=$maxnum;
+my $multiplot=-1;
 my $outbase="plot";
 while(1){
 	if   ($ARGV[0]eq"-h"        ){ shift; &usage();         }
@@ -37,6 +19,7 @@ while(1){
 	elsif($ARGV[0]eq"-blkw"     ){ shift; $blk=$blk?$blk:1; $gpcfg.="set boxwidth ".(shift)." absolute\n"; }
 	elsif($ARGV[0]eq"-hist"     ){ shift; $hist   =1;       }
 	elsif($ARGV[0]eq"-xy"       ){ shift; $colxy  =1;       }
+	elsif($ARGV[0]eq"-nox"      ){ shift; $colxy  =-1;      }
 	elsif($ARGV[0]eq"-2"        ){ shift; $colxy  =1;       }
 	elsif($ARGV[0]eq"-col"      ){ shift; $coln   =shift;   }
 	elsif($ARGV[0]eq"-3"        ){ shift; $coln   =2;       }
@@ -56,7 +39,32 @@ while(1){
 	elsif($ARGV[0]eq"-c"        ){ shift; $gpcfg .=&readfile(shift); }
 	else{ last; }
 }
+
+open TMP,">".$tmpdat;
+my $i=0;
+while(<STDIN>){
+	print TMP ($i++)." " if $colxy<0;
+	print TMP $_;
+	if($_=~/^(.*)#(.*)$/){
+		$_=$1;
+		foreach(split / +/,$2){
+			$_=~s/__/ /g;
+			push @ARGV,$_;
+		}
+	}
+	$_=~s/^ +//g;
+	$_=~s/ +$//g;
+	next if ""eq$_;
+	my $num=split / +/,$_;
+	$num++ if $colxy<0;
+	$maxnum=$num if $maxnum<$num;
+}
+close TMP;
+
 $gpcfg.=$size if ""ne$size && ($png || $eps);
+$nbg=1 if $png || $eps;
+$multiplot=$maxnum if $multiplot<0;
+$colxy=0 if $colxy<0;
 
 sub usage {
 	print "Usage: $0 {Options} {COLNAME}\n";
@@ -65,11 +73,12 @@ sub usage {
 	print "  -blke           use blocks with error bars\n";
 	print "  -blkw NUM       set absolute block width (implies -blk)\n";
 	print "  -xy             use two colums of data (x,y-values) - normaly x-values are read from the first column\n";
+	print "  -nox            there is no x-column in data - use line number\n";
 	print "  -col N          use N data columns (for block width in -blk mode, or err-bar in -blke)\n";
 	print "  -multiplot N    use every N columns for a new subplot\n";
 	print "  -xrange MIN:MAX define x-axis range\n";
 	print "  -yrange MIN:MAX define y-axis range\n";
-	print "  -xtics          places labels L at position P (exa: 0.5:hallo,0.8:welt)\n";
+	print "  -xtics [P:]L,...places labels L at position P (\"0.5:hallo,0.8:welt\" or \"hallo,welt\")\n";
 	print "  -xgrid          x-axis grid\n";
 	print "  -ygrid          y-axis grid\n";
 	print "  -size W,H       set size of drawing (for png/eps)\n";
@@ -178,9 +187,12 @@ sub readfile {
 sub readxtics {
 	my $xtics=shift;
 	my $gp="set xtics (";
+	my $i=0;
 	foreach my $xtic (split /,/,$xtics){
 		(my $pos,my $lab)=split /:/,$xtic,2;
+		if($xtic!~/:/){ $lab=$pos; $pos=$i; }
 		$gp.="'".$lab."' ".$pos.",";
+		$i++;
 	}
 	$gp=~s/,$//;
 	$gp.=")\n";
