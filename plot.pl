@@ -1,9 +1,19 @@
 #!/usr/bin/perl
 
 use strict;
+use File::Basename;
+my $pname=$0;
+$pname=$ENV{"_"} if ! $pname;
+if(-l $pname){
+	my $l=readlink $pname;
+	$l=dirname($pname)."/".$l if $l!~/^[\/\\]/;
+	$pname=$l;
+}
+unshift @INC,dirname($pname);
+require hlp;
 
-my $tmpdat="/tmp/plot.pl.$$.dat";
-my $tmpdem="/tmp/plot.pl.$$.dem";
+my $tmpdat=&hlp::gettmp("dat");
+my $tmpdem=&hlp::gettmp("dem");
 my $maxnum=0;
 
 my $gpcfg="";
@@ -64,6 +74,7 @@ close TMP;
 $gpcfg.=$size if ""ne$size && ($png || $eps);
 $nbg=1 if $png || $eps;
 $multiplot=$maxnum if $multiplot<0;
+my $nplot=$multiplot<$maxnum ? int($maxnum-($colxy<0?1:0)/$multiplot) : 1;
 $colxy=0 if $colxy<0;
 
 sub usage {
@@ -117,10 +128,8 @@ if($png){
 	$dem.="set term png size ".$png."\n";
 	$dem.="set output \"".$outbase.".png\"\n";
 }
-my $nplot=1;
 my $iplot=0;
-if($multiplot<$maxnum){
-  $nplot=int($maxnum/$multiplot);
+if($nplot>1){
   $dem.="set multiplot\n";
   $dem.="set format x \"\"\n";
   $dem.="set bmargin 0\n";
@@ -130,7 +139,7 @@ if($multiplot<$maxnum){
 my $ncol = $colxy+$coln; # number of colums per line
 my $col  = $colxy ? 0 : 1; # first column
 while($col<$maxnum){
-  if($multiplot<$maxnum){
+  if($nplot>1){
     $dem.="set tmargin 0\n";
     if(++$iplot==$nplot){
       $dem.="set format x\n";
@@ -158,7 +167,7 @@ while($col<$maxnum){
   }
   $dem=~s/,$//; $dem.="\n";
 }
-if($multiplot<$maxnum){
+if($nplot>1){
   $dem.="unset multiplot\n";
 }
 $dem.="pause mouse\n";
@@ -208,3 +217,5 @@ sub readcolors {
 	}
 	return $gp;
 }
+
+1;
