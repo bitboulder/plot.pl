@@ -17,6 +17,7 @@ my $tmpdem=&hlp::gettmp("dem");
 my $maxnum=0;
 
 my $gpcfg="";
+my $ptyp="lines";
 (my $nbg,my $blk,my $img,my $hist,my $colxy,my $coln,my $eps)=(0,0,0,0,0,1,0);
 (my $size,my $png)=("","","");
 my $multiplot=-1;
@@ -27,13 +28,14 @@ while(1){
 	elsif($ARGV[0]eq"-blk"      ){ shift; $blk    =1;       }
 	elsif($ARGV[0]eq"-blke"     ){ shift; $blk    =2;       }
 	elsif($ARGV[0]eq"-blkw"     ){ shift; $blk=$blk?$blk:1; $gpcfg.="set boxwidth ".(shift)." absolute\n"; }
-	elsif($ARGV[0]eq"-img"      ){ shift; $img=1; $coln=0; }
+	elsif($ARGV[0]eq"-img"      ){ shift; $img=1; $coln=0;  } # depr
+	elsif($ARGV[0]eq"-typ"      ){ shift; $ptyp=shift;      } # TODO: treatment for img,blk + remove $img,$blk,$hist
 	elsif($ARGV[0]eq"-hist"     ){ shift; $hist   =1;       }
 	elsif($ARGV[0]eq"-xy"       ){ shift; $colxy  =1;       }
 	elsif($ARGV[0]eq"-nox"      ){ shift; $colxy  =-1;      }
-	elsif($ARGV[0]eq"-2"        ){ shift; $colxy  =1;       }
+	elsif($ARGV[0]eq"-2"        ){ shift; $colxy  =1;       } # depr
 	elsif($ARGV[0]eq"-col"      ){ shift; $coln   =shift;   }
-	elsif($ARGV[0]eq"-3"        ){ shift; $coln   =2;       }
+	elsif($ARGV[0]eq"-3"        ){ shift; $coln   =2;       } # depr
 	elsif($ARGV[0]eq"-multiplot"){ shift; $multiplot=shift; }
 	elsif($ARGV[0]eq"-xrange"   ){ shift; $gpcfg .="set xrange [".(shift)."]\n"; }
 	elsif($ARGV[0]eq"-yrange"   ){ shift; $gpcfg .="set yrange [".(shift)."]\n"; }
@@ -46,6 +48,7 @@ while(1){
 	elsif($ARGV[0]eq"-size"     ){ shift; $size  .="set size ".(shift)."\n"; }
 	elsif($ARGV[0]eq"-xsize"    ){ shift; $gpcfg .="set terminal x11 size ".(shift)."\n"; }
 	elsif($ARGV[0]eq"-color"    ){ shift; $gpcfg .=&readcolors(shift); }
+	elsif($ARGV[0]eq"-log"      ){ shift; $gpcfg .="set logscale ".(shift)."\n"; }
 	elsif($ARGV[0]eq"-eps"      ){ shift; $eps    =1;       }
 	elsif($ARGV[0]eq"-png"      ){ shift; $png    =shift;   }
 	elsif($ARGV[0]eq"-out"      ){ shift; $outbase=shift;   }
@@ -85,11 +88,15 @@ $colxy=0 if $colxy<0;
 
 sub usage {
 	print "Usage: $0 {Options} {COLNAME}\n";
+	print "  -typ TYP        plotting type:\n";
+	print "       lines (def.) use lines\n";
+	print "       boxes        use boxes (for histogram,recognition result,...)\n";
+	print "       image        use image (for sonagram,confusion matrix,...)\n";
+	print "       any other gnuplot plotting style (points,dots,...)\n";
 	print "  -nbg            no background mode (donot detach from terminal)\n";
 	print "  -blk            use blocks instead of lines\n";
 	print "  -blke           use blocks with error bars\n";
 	print "  -blkw NUM       set absolute block width (implies -blk)\n";
-	print "  -img            image drawing mode (for sonagram,confusion matrix,...)\n";
 	print "  -xy             use two colums of data (x,y-values) - normaly x-values are read from the first column\n";
 	print "  -nox            there is no x-column in data - use line number\n";
 	print "  -col N          use N data columns (for block width in -blk mode, or err-bar in -blke)\n";
@@ -105,6 +112,7 @@ sub usage {
 	print "  -size W,H       set size of drawing (for png/eps)\n";
 	print "  -xsize W,H      set size of x11-window drawing\n";
 	print "  -color C,C,...  define colors (exa: ff0000,00ff000)\n";
+	print "  -log AXIS       enable logscale (AXIS: x|y|xy)\n";
 	print "  -eps            output eps-file\n";
 	print "  -png W,H        output png-file with WxH pixels\n";
 	print "  -out OUTBASE    define basename of generated output files (will be extended by \".png\" or \".eps\")\n";
@@ -115,7 +123,7 @@ sub usage {
 }
 
 my $dem="";
-my $with="";
+my $with=$ptyp;
 if($blk){
 	$with=$blk==1 ? "boxes" : "boxerrorbars";
 	$dem.="set boxwidth 1.0 relative\n";
@@ -126,8 +134,6 @@ if($blk){
 #	$dem.="set style histogram rowstacked\n";
 #	$dem.="set style fill solid border -1\n";
 #	$dem.="set boxwidth 0.8 relative\n";
-}else{
-	$with="lines";
 }
 $with="image" if $img;
 $dem.=$gpcfg;
