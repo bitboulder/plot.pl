@@ -18,7 +18,7 @@ my $maxnum=0;
 
 my $gpcfg="";
 my $ptyp="lines";
-(my $nbg,my $blk,my $img,my $hist,my $colxy,my $coln,my $eps)=(0,0,0,0,0,1,0);
+(my $nbg,my $blk,my $colxy,my $coln,my $eps)=(0,0,0,1,0);
 (my $size,my $png)=("","","");
 my $multiplot=-1;
 my $outbase="plot";
@@ -28,9 +28,7 @@ while(1){
 	elsif($ARGV[0]eq"-blk"      ){ shift; $blk    =1;       }
 	elsif($ARGV[0]eq"-blke"     ){ shift; $blk    =2;       }
 	elsif($ARGV[0]eq"-blkw"     ){ shift; $blk=$blk?$blk:1; $gpcfg.="set boxwidth ".(shift)." absolute\n"; }
-	elsif($ARGV[0]eq"-img"      ){ shift; $img=1; $coln=0;  } # depr
-	elsif($ARGV[0]eq"-typ"      ){ shift; $ptyp=shift;      } # TODO: treatment for img,blk + remove $img,$blk,$hist
-	elsif($ARGV[0]eq"-hist"     ){ shift; $hist   =1;       }
+	elsif($ARGV[0]eq"-typ"      ){ shift; $ptyp=shift;   &ptypinit(); }
 	elsif($ARGV[0]eq"-xy"       ){ shift; $colxy  =1;       }
 	elsif($ARGV[0]eq"-nox"      ){ shift; $colxy  =-1;      }
 	elsif($ARGV[0]eq"-2"        ){ shift; $colxy  =1;       } # depr
@@ -78,7 +76,12 @@ while(<STDIN>){
 }
 close TMP;
 
-$blk=0 if $img;
+sub ptypinit {
+	if("image"eq$ptyp){
+		$coln=0;
+	}
+}
+
 $coln=$maxnum if !$coln;
 $gpcfg.=$size if ""ne$size && ($png || $eps);
 $nbg=1 if $png || $eps;
@@ -123,19 +126,13 @@ sub usage {
 }
 
 my $dem="";
-my $with=$ptyp;
 if($blk){
-	$with=$blk==1 ? "boxes" : "boxerrorbars";
+	$ptyp=$blk==1 ? "boxes" : "boxerrorbars";
 	$dem.="set boxwidth 1.0 relative\n";
 	$dem.="set style fill solid border -1\n";
-  $dem.="set style fill solid 0.2\n" if $blk==2;
-#}elsif($hist){
-#	$with="histograms";
-#	$dem.="set style histogram rowstacked\n";
-#	$dem.="set style fill solid border -1\n";
-#	$dem.="set boxwidth 0.8 relative\n";
+	$dem.="set style fill solid 0.2\n" if $blk==2;
 }
-$with="image" if $img;
+my $matrix = $ptyp=~/^(image)$/;
 $dem.=$gpcfg;
 if($eps){
 	$dem.="set term postscript eps color\n";
@@ -173,14 +170,13 @@ while($col<$maxnum){
   while($col<$maxnum && $scol<$multiplot){
   	my $title = $ARGV[$scol];
   	my $using = ($colxy ? ++$col : 1);
-  	#$with="points" if $col>3;
     for(my $i=0;$i<$coln;$i++){ $using.=":".(++$col); }
   	$dem.=" \"".$tmpdat."\"";
-	$dem.=" matrix" if $img;
-	$dem.=" using ".$using if !$img;
+	$dem.=" matrix" if $matrix;
+	$dem.=" using ".$using if !$matrix;
   	$dem.=" title \"".$title."\"" if $title ne "";
-  	$dem.=" with ".$with if $with ne "";
-  	$dem.=" ls ".($ls++) if !$img;
+  	$dem.=" with ".$ptyp;
+  	$dem.=" ls ".($ls++) if !$matrix;
   	$dem.=",";
     $scol++;
   }
