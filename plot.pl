@@ -49,7 +49,7 @@ while(1){
 	elsif($ARGV[0]eq"-log"      ){ shift; $gpcfg .="set logscale ".(shift)."\n"; }
 	elsif($ARGV[0]eq"-eps"      ){ shift; $eps    =1;       }
 	elsif($ARGV[0]eq"-png"      ){ shift; $png    =shift;   }
-	elsif($ARGV[0]eq"-out"      ){ shift; $outbase=shift;   }
+	elsif($ARGV[0]eq"-out"      ){ shift; $outbase=shift;  system "mkdir -p \"".dirname($outbase)."\""; }
 	elsif($ARGV[0]eq"-C"        ){ shift; $gpcfg .=(shift)."\n"; }
 	elsif($ARGV[0]eq"-c"        ){ shift; $gpcfg .=&readfile(shift); }
 	else{ last; }
