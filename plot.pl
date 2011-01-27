@@ -18,6 +18,7 @@ my $maxnum=0;
 
 my $gpcfg="";
 my $ptyp="lines";
+my $infile="";
 (my $nbg,my $blk,my $colxy,my $coln,my $eps)=(0,0,0,1,0);
 (my $size,my $png)=("","","");
 my $multiplot=-1;
@@ -49,12 +50,18 @@ while(1){
 	elsif($ARGV[0]eq"-log"      ){ shift; $gpcfg .="set logscale ".(shift)."\n"; }
 	elsif($ARGV[0]eq"-eps"      ){ shift; $eps    =1;       }
 	elsif($ARGV[0]eq"-png"      ){ shift; $png    =shift;   }
+	elsif($ARGV[0]eq"-in"       ){ shift; $infile =shift;   }
 	elsif($ARGV[0]eq"-out"      ){ shift; $outbase=shift;  system "mkdir -p \"".dirname($outbase)."\""; }
 	elsif($ARGV[0]eq"-C"        ){ shift; $gpcfg .=(shift)."\n"; }
 	elsif($ARGV[0]eq"-c"        ){ shift; $gpcfg .=&readfile(shift); }
 	else{ last; }
 }
 
+
+if(""ne$infile){
+	close STDIN;
+	open STDIN,"<".$infile || die "could not open infile";
+}
 open TMP,">".$tmpdat;
 my $i=0;
 while(<STDIN>){
@@ -75,6 +82,7 @@ while(<STDIN>){
 	$maxnum=$num if $maxnum<$num;
 }
 close TMP;
+close STDIN if ""ne$infile;
 
 sub ptypinit {
 	if("image"eq$ptyp){
@@ -118,6 +126,7 @@ sub usage {
 	print "  -log AXIS       enable logscale (AXIS: x|y|xy)\n";
 	print "  -eps            output eps-file\n";
 	print "  -png W,H        output png-file with WxH pixels\n";
+	print "  -in INPUTFILE   read data form file instead of stdin\n";
 	print "  -out OUTBASE    define basename of generated output files (will be extended by \".png\" or \".eps\")\n";
 	print "  -c GPCFG        include file GPCFG in gnuplot script\n";
 	print "  -C GPCMD        include command GPCMD in gnuplot script\n";
