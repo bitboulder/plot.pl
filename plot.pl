@@ -62,6 +62,7 @@ while(1){
 	elsif($ARGV[0]eq"-ytics"    ){ shift; $gpcfg .=&readtics("ytics",shift); }
 	elsif($ARGV[0]eq"-xlabel"   ){ shift; $gpcfg .="set xlabel \"".(shift)."\"\n"; }
 	elsif($ARGV[0]eq"-ylabel"   ){ shift; $gpcfg .="set ylabel \"".(shift)."\"\n"; }
+	elsif($ARGV[0]eq"-title"    ){ shift; $gpcfg .="set title \"".(shift)."\"\n"; }
 	elsif($ARGV[0]eq"-size"     ){ shift; $size  .="set size ".(shift)."\n"; }
 	elsif($ARGV[0]eq"-xsize"    ){ shift; $gpcfg .="set terminal x11 size ".(shift)."\n"; }
 	elsif($ARGV[0]eq"-color"    ){ shift; $gpcfg .=&readcolors(shift); }
@@ -123,6 +124,7 @@ sub usage {
 	print "  -ytics [P:]L,...places labels L at position P (\"0.5:hallo,0.8:welt\" or \"hallo,welt\")\n";
 	print "  -xlabel TXT     label for x-axis\n";
 	print "  -ylabel TXT     label for y-axis\n";
+  print "  -title TXT      plot title\n";
 	print "  -xgrid          x-axis grid\n";
 	print "  -ygrid          y-axis grid\n";
 	print "  -size W,H       set size of drawing (for png/eps)\n";
