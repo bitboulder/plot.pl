@@ -16,6 +16,24 @@ my $tmpdat=&hlp::gettmp("dat");
 my $tmpdem=&hlp::gettmp("dem");
 my $maxnum=0;
 
+my @dat=();
+my $i=0;
+while(<STDIN>){
+	push @dat,$_;
+	if($_=~/^(.*)#(.*)$/){
+		$_=$1;
+		foreach(split / +/,$2){
+			$_=~s/__/ /g;
+			push @ARGV,$_;
+		}
+	}
+	$_=~s/^ +//g;
+	$_=~s/ +$//g;
+	next if ""eq$_;
+	my $num=split / +/,$_;
+	$maxnum=$num if $maxnum<$num;
+}
+
 my $gpcfg="";
 my $ptyp="lines";
 my $infile="";
@@ -63,23 +81,9 @@ if(""ne$infile){
 	open STDIN,"<".$infile || die "could not open infile";
 }
 open TMP,">".$tmpdat;
-my $i=0;
-while(<STDIN>){
+foreach(@dat){
 	print TMP ($i++)." " if $colxy<0;
 	print TMP $_;
-	if($_=~/^(.*)#(.*)$/){
-		$_=$1;
-		foreach(split / +/,$2){
-			$_=~s/__/ /g;
-			push @ARGV,$_;
-		}
-	}
-	$_=~s/^ +//g;
-	$_=~s/ +$//g;
-	next if ""eq$_;
-	my $num=split / +/,$_;
-	$num++ if $colxy<0;
-	$maxnum=$num if $maxnum<$num;
 }
 close TMP;
 close STDIN if ""ne$infile;
@@ -90,11 +94,12 @@ sub ptypinit {
 	}
 }
 
+$maxnum++ if $colxy<0;
 $coln=$maxnum if !$coln;
 $gpcfg.=$size if ""ne$size && ($png || $eps);
 $nbg=1 if $png || $eps;
 $multiplot=$maxnum if $multiplot<0;
-my $nplot=$multiplot<$maxnum ? int($maxnum-($colxy<0?1:0)/$multiplot) : 1;
+my $nplot=$multiplot<$maxnum ? int(($maxnum-($colxy<0?1:0))/$multiplot) : 1;
 $colxy=0 if $colxy<0;
 
 sub usage {
