@@ -16,6 +16,22 @@ my $tmpdat=&hlp::gettmp("dat");
 my $tmpdem=&hlp::gettmp("dem");
 my $maxnum=0;
 
+my $infile="";
+
+for(my $i=0;$i<@ARGV;$i++){
+	if($ARGV[$i]eq"-h"){ &usage(); }
+	elsif($ARGV[$i]eq"-in"){
+		$infile=$ARGV[$i+1];
+		splice @ARGV,$i,2;
+		$i--;
+	}
+}
+
+if(""ne$infile){
+	close STDIN;
+	open STDIN,"<".$infile || die "could not open infile";
+}
+
 my @dat=();
 my $i=0;
 while(<STDIN>){
@@ -33,17 +49,17 @@ while(<STDIN>){
 	my $num=split / +/,$_;
 	$maxnum=$num if $maxnum<$num;
 }
+&usage() if $maxnum<1;
+push @ARGV,"-nox" if $maxnum==1;
 
 my $gpcfg="";
 my $ptyp="lines";
-my $infile="";
 (my $nbg,my $blk,my $colxy,my $coln,my $eps)=(0,0,0,1,0);
 (my $size,my $png)=("","","");
 my $multiplot=-1;
 my $outbase="plot";
 while(1){
-	if   ($ARGV[0]eq"-h"        ){ shift; &usage();         }
-	elsif($ARGV[0]eq"-nbg"      ){ shift; $nbg    =1;       }
+	if   ($ARGV[0]eq"-nbg"      ){ shift; $nbg    =1;       }
 	elsif($ARGV[0]eq"-blk"      ){ shift; $blk    =1;       }
 	elsif($ARGV[0]eq"-blke"     ){ shift; $blk    =2;       }
 	elsif($ARGV[0]eq"-blkw"     ){ shift; $blk=$blk?$blk:1; $gpcfg.="set boxwidth ".(shift)." absolute\n"; }
@@ -69,7 +85,6 @@ while(1){
 	elsif($ARGV[0]eq"-log"      ){ shift; $gpcfg .="set logscale ".(shift)."\n"; }
 	elsif($ARGV[0]eq"-eps"      ){ shift; $eps    =1;       }
 	elsif($ARGV[0]eq"-png"      ){ shift; $png    =shift;   }
-	elsif($ARGV[0]eq"-in"       ){ shift; $infile =shift;   }
 	elsif($ARGV[0]eq"-out"      ){ shift; $outbase=shift;  system "mkdir -p \"".dirname($outbase)."\""; }
 	elsif($ARGV[0]eq"-C"        ){ shift; $gpcfg .=(shift)."\n"; }
 	elsif($ARGV[0]eq"-c"        ){ shift; $gpcfg .=&readfile(shift); }
@@ -77,10 +92,6 @@ while(1){
 }
 
 
-if(""ne$infile){
-	close STDIN;
-	open STDIN,"<".$infile || die "could not open infile";
-}
 open TMP,">".$tmpdat;
 foreach(@dat){
 	print TMP ($i++)." " if $colxy<0;
