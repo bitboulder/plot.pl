@@ -52,15 +52,18 @@ while(<STDIN>){
 &usage() if $maxnum<1;
 push @ARGV,"-nox" if $maxnum==1;
 
+my %outtyps=("x11"=>"x11", "eps"=>"postscript eps color", "png"=>"png", "jpg"=>"jpeg");
+
 my $gpcfg="";
 my $gpcfgnf="";
 my $gpcfgl="";
 my $ylabel="";
 my $ptyp="lines";
-(my $nbg,my $blk,my $colxy,my $coln,my $eps)=(0,0,0,1,0);
-(my $size,my $png)=("","","");
-my $multiplot=-1;
+(my $nbg,my $blk,my $colxy,my $coln)=(0,0,0,1);
+(my $size,my $xsize)=("","");
+my $outtyp="x11";
 my $outbase="plot";
+my $multiplot=-1;
 while(1){
 	if   ($ARGV[0]eq"-nbg"      ){ shift; $nbg    =1;       }
 	elsif($ARGV[0]eq"-blk"      ){ shift; $blk    =1;       }
@@ -69,9 +72,7 @@ while(1){
 	elsif($ARGV[0]eq"-typ"      ){ shift; $ptyp=shift;   &ptypinit(); }
 	elsif($ARGV[0]eq"-xy"       ){ shift; $colxy  =1;       }
 	elsif($ARGV[0]eq"-nox"      ){ shift; $colxy  =-1;      }
-	elsif($ARGV[0]eq"-2"        ){ shift; $colxy  =1;       } # depr
 	elsif($ARGV[0]eq"-col"      ){ shift; $coln   =shift;   }
-	elsif($ARGV[0]eq"-3"        ){ shift; $coln   =2;       } # depr
 	elsif($ARGV[0]eq"-multiplot"){ shift; $multiplot=shift; }
 	elsif($ARGV[0]eq"-xrange"   ){ shift; $gpcfg .="set xrange [".(shift)."]\n"; }
 	elsif($ARGV[0]eq"-yrange"   ){ shift; $gpcfg .="set yrange [".(shift)."]\n"; }
@@ -80,17 +81,20 @@ while(1){
 	elsif($ARGV[0]eq"-xtics"    ){ shift; $gpcfg .=&readtics("xtics",shift); }
 	elsif($ARGV[0]eq"-ytics"    ){ shift; $gpcfg .=&readtics("ytics",shift); }
 	elsif($ARGV[0]eq"-xlabel"   ){ shift; $gpcfgl.="set xlabel \"".(shift)."\"\n"; }
-	elsif($ARGV[0]eq"-ylabel"   ){ shift; $ylabel =shift; }
+	elsif($ARGV[0]eq"-ylabel"   ){ shift; $ylabel =shift;   }
 	elsif($ARGV[0]eq"-title"    ){ shift; $gpcfg .="set title \"".(shift)."\"\n"; $gpcfgnf.="unset title\n"; }
-	elsif($ARGV[0]eq"-size"     ){ shift; $size  .="set size ".(shift)."\n"; }
-	elsif($ARGV[0]eq"-xsize"    ){ shift; $gpcfg .="set terminal x11 size ".(shift)."\n"; }
+	elsif($ARGV[0]eq"-size"     ){ shift; $size   =shift;   }
+	elsif($ARGV[0]eq"-xsize"    ){ shift; $xsize  =shift;   }
 	elsif($ARGV[0]eq"-color"    ){ shift; $gpcfg .=&readcolors(shift); }
 	elsif($ARGV[0]eq"-log"      ){ shift; $gpcfg .="set logscale ".(shift)."\n"; }
-	elsif($ARGV[0]eq"-eps"      ){ shift; $eps    =1;       }
-	elsif($ARGV[0]eq"-png"      ){ shift; $png    =shift;   }
-	elsif($ARGV[0]eq"-out"      ){ shift; $outbase=shift;  system "mkdir -p \"".dirname($outbase)."\""; }
+	elsif($ARGV[0]eq"-out"      ){ shift; &readout(shift);  }
 	elsif($ARGV[0]eq"-C"        ){ shift; $gpcfg .=(shift)."\n"; }
 	elsif($ARGV[0]eq"-c"        ){ shift; $gpcfg .=&readfile(shift); }
+	# deprecated
+	elsif($ARGV[0]eq"-2"        ){ shift; $colxy  =1;       }
+	elsif($ARGV[0]eq"-3"        ){ shift; $coln   =2;       }
+	elsif($ARGV[0]eq"-eps"      ){ shift; $outtyp ="eps";   }
+	elsif($ARGV[0]eq"-png"      ){ shift; $outtyp ="png"; $xsize=shift; }
 	else{ last; }
 }
 
@@ -111,8 +115,7 @@ sub ptypinit {
 
 $maxnum++ if $colxy<0;
 $coln=$maxnum if !$coln;
-$gpcfg.=$size if ""ne$size && ($png || $eps);
-$nbg=1 if $png || $eps;
+$nbg=1 if "x11"ne$outtyp;
 $multiplot=$maxnum if $multiplot<0;
 my $nplot=$multiplot<$maxnum ? int(($maxnum-($colxy<0?1:0))/$multiplot) : 1;
 $colxy=0 if $colxy<0;
@@ -137,18 +140,16 @@ sub usage {
 	print "  -xtics [P:]L,...\n";
 	print "  -ytics [P:]L,...places labels L at position P (\"0.5:hallo,0.8:welt\" or \"hallo,welt\")\n";
 	print "  -xlabel TXT     label for x-axis\n";
-	print "  -ylabel TXT     label for y-axis\n";
+	print "  -ylabel TXT     label for y-axis (multiple labels for multiplot: seperated by ,)\n";
 	print "  -title TXT      plot title\n";
 	print "  -xgrid          x-axis grid\n";
 	print "  -ygrid          y-axis grid\n";
-	print "  -size W,H       set size of drawing (for png/eps)\n";
-	print "  -xsize W,H      set size of x11-window drawing\n";
+	print "  -size W,H       set drawing size for gnuplot\n";
+	print "  -xsize W,H      set output size of drawing in pixels (for eps use: Wcm,Hcm)\n";
 	print "  -color C,C,...  define colors (exa: ff0000,00ff000)\n";
 	print "  -log AXIS       enable logscale (AXIS: x|y|xy)\n";
-	print "  -eps            output eps-file\n";
-	print "  -png W,H        output png-file with WxH pixels\n";
 	print "  -in INPUTFILE   read data form file instead of stdin\n";
-	print "  -out OUTBASE    define basename of generated output files (will be extended by \".png\" or \".eps\")\n";
+	print "  -out OUTFILE    define name of generated output file (extension specifies output type - eps|png|jpg / only type is also possible)\n";
 	print "  -c GPCFG        include file GPCFG in gnuplot script\n";
 	print "  -C GPCMD        include command GPCMD in gnuplot script\n";
 	print "  COLNAME         sorted list of column titles\n";
@@ -164,14 +165,10 @@ if($blk){
 }
 my $matrix = $ptyp=~/^(image)$/;
 $dem.=$gpcfg;
-if($eps){
-	$dem.="set term postscript eps color\n";
-	$dem.="set output \"".$outbase.".eps\"\n";
-}
-if($png){
-	$dem.="set term png size ".$png."\n";
-	$dem.="set output \"".$outbase.".png\"\n";
-}
+$dem.="set term ".$outtyps{$outtyp};
+$dem.=" size ".$xsize if ""ne$xsize;
+$dem.="\n";
+$dem.="set output \"".$outbase.".".$outtyp."\n" if "x11"ne$outtyp;
 my $iplot=0;
 my @gpcfgi=();
 if($nplot>1){
@@ -235,6 +232,19 @@ system "gnuplot ".$tmpdem;
 unlink $tmpdat;
 unlink $tmpdem;
 
+sub readout {
+	my $arg=shift;
+	if($arg=~/^(.*)\.([a-z]{3})/){
+		$outbase=$1;
+		$outtyp=$2;
+		die "unknown outtyp: $outtyp" if !exists $outtyps{$outtyp};
+	}elsif(exists $outtyps{$arg}){
+		$outtyp=$arg;
+	}else{
+		$outbase=$arg;
+	}
+	system "mkdir -p \"".dirname($outbase)."\""; 
+}
 
 sub readfile {
 	my $file=shift;
