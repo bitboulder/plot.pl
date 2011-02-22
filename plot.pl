@@ -16,15 +16,26 @@ my $tmpdat=&hlp::gettmp("dat");
 my $tmpdem=&hlp::gettmp("dem");
 my $maxnum=0;
 
+my %outtyps=("x11"=>"x11", "eps"=>"postscript eps color", "png"=>"png", "jpg"=>"jpeg", "plot"=>"plot");
+my $outtyp="x11";
+my $outbase="plot";
+
+my $gpcfg="";
+my $gpcfgnf="";
+my $gpcfgl="";
+my $ylabel="";
+my $ptyp="lines";
+(my $nbg,my $blk,my $colxy,my $coln)=(0,0,0,1);
+(my $size,my $xsize)=("","");
+my $multiplot=-1;
 my $infile="";
 
-for(my $i=0;$i<@ARGV;$i++){
+for(my $i=@ARGV-1;$i>=0;$i--){
+	my $del=0;
 	if($ARGV[$i]eq"-h"){ &usage(); }
-	elsif($ARGV[$i]eq"-in"){
-		$infile=$ARGV[$i+1];
-		splice @ARGV,$i,2;
-		$i--;
-	}
+	elsif($ARGV[$i]eq"-in"){ $infile=$ARGV[$i+1]; $del=2; }
+	elsif($ARGV[$i]eq"-out"){ &readout($ARGV[$i+1]); $del=2;  }
+	splice @ARGV,$i,$del if $del>0;
 }
 
 if(""ne$infile){
@@ -49,21 +60,24 @@ while(<STDIN>){
 	my $num=split / +/,$_;
 	$maxnum=$num if $maxnum<$num;
 }
+close STDIN if ""ne$infile;
+
+if($outtyps{$outtyp}eq"plot"){
+	open PL,">".$outbase.".".$outtyp;
+	for(my $i=@ARGV-1;$i>0;$i--){
+		next if $ARGV[$i-1]!~/^-/ || $ARGV[$i]=~/^-/;
+		$ARGV[$i-1].=" ".$ARGV[$i];
+		splice @ARGV,$i,1;
+	}
+	foreach(@ARGV){ print PL "#$_\n"; }
+	foreach(@dat){ print PL $_; }
+	close PL;
+	exit 0;
+}
+
 &usage() if $maxnum<1;
 push @ARGV,"-nox" if $maxnum==1;
 
-my %outtyps=("x11"=>"x11", "eps"=>"postscript eps color", "png"=>"png", "jpg"=>"jpeg");
-
-my $gpcfg="";
-my $gpcfgnf="";
-my $gpcfgl="";
-my $ylabel="";
-my $ptyp="lines";
-(my $nbg,my $blk,my $colxy,my $coln)=(0,0,0,1);
-(my $size,my $xsize)=("","");
-my $outtyp="x11";
-my $outbase="plot";
-my $multiplot=-1;
 while(1){
 	if   ($ARGV[0]eq"-nbg"      ){ shift; $nbg    =1;       }
 	elsif($ARGV[0]eq"-blk"      ){ shift; $blk    =1;       }
@@ -87,7 +101,6 @@ while(1){
 	elsif($ARGV[0]eq"-xsize"    ){ shift; $xsize  =shift;   }
 	elsif($ARGV[0]eq"-color"    ){ shift; $gpcfg .=&readcolors(shift); }
 	elsif($ARGV[0]eq"-log"      ){ shift; $gpcfg .="set logscale ".(shift)."\n"; }
-	elsif($ARGV[0]eq"-out"      ){ shift; &readout(shift);  }
 	elsif($ARGV[0]eq"-C"        ){ shift; $gpcfg .=(shift)."\n"; }
 	elsif($ARGV[0]eq"-c"        ){ shift; $gpcfg .=&readfile(shift); }
 	# deprecated
@@ -98,14 +111,12 @@ while(1){
 	else{ last; }
 }
 
-
 open TMP,">".$tmpdat;
 foreach(@dat){
 	print TMP ($i++)." " if $colxy<0;
 	print TMP $_;
 }
 close TMP;
-close STDIN if ""ne$infile;
 
 sub ptypinit {
 	if("image"eq$ptyp){
@@ -149,7 +160,7 @@ sub usage {
 	print "  -color C,C,...  define colors (exa: ff0000,00ff000)\n";
 	print "  -log AXIS       enable logscale (AXIS: x|y|xy)\n";
 	print "  -in INPUTFILE   read data form file instead of stdin\n";
-	print "  -out OUTFILE    define name of generated output file (extension specifies output type - eps|png|jpg / only type is also possible)\n";
+	print "  -out OUTFILE    define name of generated output file (extension specifies output type - eps|png|jpg|plot / only type is also possible)\n";
 	print "  -c GPCFG        include file GPCFG in gnuplot script\n";
 	print "  -C GPCMD        include command GPCMD in gnuplot script\n";
 	print "  COLNAME         sorted list of column titles\n";
@@ -234,7 +245,7 @@ unlink $tmpdem;
 
 sub readout {
 	my $arg=shift;
-	if($arg=~/^(.*)\.([a-z]{3})/){
+	if($arg=~/^(.*)\.([a-z]{3-4})/){
 		$outbase=$1;
 		$outtyp=$2;
 		die "unknown outtyp: $outtyp" if !exists $outtyps{$outtyp};
