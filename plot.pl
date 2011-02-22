@@ -16,7 +16,7 @@ my $tmpdat=&hlp::gettmp("dat");
 my $tmpdem=&hlp::gettmp("dem");
 my $maxnum=0;
 
-my %outtyps=("x11"=>"x11", "eps"=>"postscript eps color", "png"=>"png", "jpg"=>"jpeg", "plot"=>"plot");
+my %outtyps=("x11"=>"x11", "eps"=>"postscript eps color", "tex"=>"epslatex", "png"=>"png", "jpg"=>"jpeg", "plot"=>"plot");
 my $outtyp="x11";
 my $outbase="plot";
 
