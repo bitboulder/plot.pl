@@ -245,7 +245,7 @@ unlink $tmpdem;
 
 sub readout {
 	my $arg=shift;
-	if($arg=~/^(.*)\.([a-z]{3-4})/){
+	if($arg=~/^(.*)\.([a-z]{3,4})$/){
 		$outbase=$1;
 		$outtyp=$2;
 		die "unknown outtyp: $outtyp" if !exists $outtyps{$outtyp};
