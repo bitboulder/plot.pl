@@ -16,7 +16,7 @@ my $tmpdat=&hlp::gettmp("dat");
 my $tmpdem=&hlp::gettmp("dem");
 my $maxnum=0;
 
-my %outtyps=("x11"=>"", "eps"=>"postscript eps color", "tex"=>"epslatex", "png"=>"png", "jpg"=>"jpeg", "plot"=>"plot");
+my %outtyps=("x11"=>"", "eps"=>"postscript eps color", "tex"=>"epslatex color", "png"=>"png", "jpg"=>"jpeg", "plot"=>"plot");
 my $outtyp="x11";
 my $outbase="plot";
 
@@ -76,7 +76,7 @@ if($outtyps{$outtyp}eq"plot"){
 }
 
 &usage() if $maxnum<1;
-push @ARGV,"-nox" if $maxnum==1;
+unshift @ARGV,"-nox" if $maxnum==1;
 
 while(1){
 	if   ($ARGV[0]eq"-nbg"      ){ shift; $nbg    =1;       }
