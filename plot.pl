@@ -16,7 +16,7 @@ my $tmpdat=&hlp::gettmp("dat");
 my $tmpdem=&hlp::gettmp("dem");
 my $maxnum=0;
 
-my %outtyps=("x11"=>"x11", "eps"=>"postscript eps color", "tex"=>"epslatex", "png"=>"png", "jpg"=>"jpeg", "plot"=>"plot");
+my %outtyps=("x11"=>"", "eps"=>"postscript eps color", "tex"=>"epslatex", "png"=>"png", "jpg"=>"jpeg", "plot"=>"plot");
 my $outtyp="x11";
 my $outbase="plot";
 
@@ -176,7 +176,7 @@ if($blk){
 }
 my $matrix = $ptyp=~/^(image)$/;
 $dem.=$gpcfg;
-$dem.="set term ".$outtyps{$outtyp};
+$dem.="set term ".$outtyps{$outtyp} if ""ne$outtyps{$outtyp};
 $dem.=" size ".$xsize if ""ne$xsize;
 $dem.="\n";
 $dem.="set output \"".$outbase.".".$outtyp."\n" if "x11"ne$outtyp;
