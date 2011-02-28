@@ -46,7 +46,6 @@ if(""ne$infile){
 my @dat=();
 my $i=0;
 while(<STDIN>){
-	push @dat,$_;
 	if($_=~/^(.*)#(.*)$/){
 		$_=$1;
 		foreach(split / +/,$2){
@@ -57,6 +56,7 @@ while(<STDIN>){
 	$_=~s/^ +//g;
 	$_=~s/ +$//g;
 	next if ""eq$_;
+	push @dat,$_;
 	my $num=split / +/,$_;
 	$maxnum=$num if $maxnum<$num;
 }
