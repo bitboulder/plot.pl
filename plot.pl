@@ -94,6 +94,7 @@ if($outtyps{$outtyp}eq"plot"){
 
 &usage() if $maxnum<1;
 unshift @ARGV,"-nox" if $maxnum==1;
+$gpcfg.=&readlinestyles("lt:1");
 
 while(1){
 	if   ($ARGV[0]eq"-nbg"      ){ shift; $nbg    =1;       }
@@ -116,7 +117,8 @@ while(1){
 	elsif($ARGV[0]eq"-title"    ){ shift; $gpcfg .="set title \"".(shift)."\"\n"; $gpcfgnf.="unset title\n"; }
 	elsif($ARGV[0]eq"-size"     ){ shift; $size   =shift;   }
 	elsif($ARGV[0]eq"-xsize"    ){ shift; $outopt.=" size ".(shift);   }
-	elsif($ARGV[0]eq"-color"    ){ shift; $gpcfg .=&readcolors(shift); }
+	elsif($ARGV[0]eq"-color"    ){ shift; $gpcfg .=&readlinestyles(shift,"lc rgb \"#%s\""); }
+	elsif($ARGV[0]eq"-style"    ){ shift; $gpcfg .=&readlinestyles(shift); }
 	elsif($ARGV[0]eq"-log"      ){ shift; $gpcfg .="set logscale ".(shift)."\n"; }
 	elsif($ARGV[0]eq"-outopt"   ){ shift; $outopt.=" ".(shift); }
 	elsif($ARGV[0]eq"-C"        ){ shift; $gpcfg .=(shift)."\n"; }
@@ -156,7 +158,7 @@ sub usage {
 	print "       lines (def.) use lines\n";
 	print "       boxes        use boxes (for histogram,recognition result,...)\n";
 	print "       image        use image (for sonagram,confusion matrix,...)\n";
-	print "       any other gnuplot plotting style (points,dots,...)\n";
+	print "       any other gnuplot plotting style (points,dots,linespoints,...)\n";
 	print "  -nbg            no background mode (donot detach from terminal)\n";
 	print "  -blk            use blocks instead of lines\n";
 	print "  -blke           use blocks with error bars\n";
@@ -177,6 +179,7 @@ sub usage {
 	print "  -size W,H       set drawing size for gnuplot\n";
 	print "  -xsize W,H      set output size of drawing in pixels (for eps use: Wcm,Hcm)\n";
 	print "  -color C,C,...  define colors (exa: ff0000,00ff000)\n";
+	print "  -style T:V,V,...define line styles (exa: pt:1,2,3 / lw:2,2,1) - see gnuplot: set style line\n";
 	print "  -log AXIS       enable logscale (AXIS: x|y|xy)\n";
 	print "  -in INPUTFILE   read data form file instead of stdin\n";
 	print "  -out OUTFILE    define name of generated output file (extension specifies output type - eps|png|jpg|plot / only type is also possible)\n";
@@ -302,12 +305,21 @@ sub readtics {
 	return $gp;
 }
 
-sub readcolors {
-	my $colors=shift;
+sub readlinestyles {
+	my $args=shift;
+	my $style="lt";
+	if(@_){ $style=shift; }
+	elsif($args=~/^([^:]*):(.*)$/){
+		$style=$1." %s";
+		$args=$2;
+	}
 	my $gp="";
-	my $c=1;
-	foreach my $color (split /,/,$colors){
-		$gp.="set style line ".($c++)." lt 1 lc rgb \"#".$color."\"\n";
+	my @args=split /,/,$args;
+	my $num=@args;
+	$num=$maxnum+1 if @args==1;
+	for(my $i=0;$i<$num;$i++){
+		my $arg = @args==1 ? $args[0] : $args[$i];
+		$gp.=sprintf "set style line ".($i+1)." ".$style."\n",$arg if ""ne$arg;
 	}
 	return $gp;
 }
