@@ -64,6 +64,7 @@ close STDIN if ""ne$infile;
 
 if($outtyps{$outtyp}eq"plot"){
 	open PL,">".$outbase.".".$outtyp;
+	foreach(@ARGV){ $_=~s/ /__/g; }
 	for(my $i=@ARGV-1;$i>0;$i--){
 		next if $ARGV[$i-1]!~/^-/ || $ARGV[$i]=~/^-/;
 		$ARGV[$i-1].=" ".$ARGV[$i];
@@ -164,6 +165,9 @@ sub usage {
 	print "  -c GPCFG        include file GPCFG in gnuplot script\n";
 	print "  -C GPCMD        include command GPCMD in gnuplot script\n";
 	print "  COLNAME         sorted list of column titles\n";
+	print "All options can also be included in the input file.\n";
+	print "The options sections start with '#' and will be splitted at spaces into single options.\n";
+	print "To use spaces within the options or arguments you need to use '__'\n";
 	exit 0;
 }
 
