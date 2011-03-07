@@ -112,6 +112,20 @@ while(1){
 	else{ last; }
 }
 
+if(""eq$outtyps{$outtyp}){
+	open GP,">".$tmpdem;
+	print GP "show term\n";
+	close GP;
+	open GP,"gnuplot ".$tmpdem." 2>&1 |";
+	while(<GP>){
+		chomp $_;
+		$outtyps{$outtyp}=$1 if $_=~/terminal type is +([^ ]*) *$/;
+	}
+	close GP;
+	unlink $tmpdem;
+}
+$outtyps{$outtyp}="x11" if ""eq$outtyps{$outtyp};
+
 open TMP,">".$tmpdat;
 foreach(@dat){
 	print TMP ($i++)." " if $colxy<0;
@@ -180,7 +194,7 @@ if($blk){
 }
 my $matrix = $ptyp=~/^(image)$/;
 $dem.=$gpcfg;
-$dem.="set term ".$outtyps{$outtyp} if ""ne$outtyps{$outtyp};
+$dem.="set term ".$outtyps{$outtyp};
 $dem.=" size ".$xsize if ""ne$xsize;
 $dem.="\n";
 $dem.="set output \"".$outbase.".".$outtyp."\n" if "x11"ne$outtyp;
