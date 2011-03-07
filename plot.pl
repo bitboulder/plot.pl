@@ -16,7 +16,8 @@ my $tmpdat=&hlp::gettmp("dat");
 my $tmpdem=&hlp::gettmp("dem");
 my $maxnum=0;
 
-my %outtyps=("x11"=>"", "eps"=>"postscript eps color", "tex"=>"epslatex color", "png"=>"png", "jpg"=>"jpeg", "plot"=>"plot");
+my %outtyps=("x11"=>"", "eps"=>"postscript eps", "tex"=>"epslatex", "png"=>"png", "jpg"=>"jpeg", "plot"=>"plot");
+my %outopts=(           "eps"=>"color",          "tex"=>"color");
 my $outtyp="x11";
 my $outbase="plot";
 
@@ -26,7 +27,8 @@ my $gpcfgl="";
 my $ylabel="";
 my $ptyp="lines";
 (my $nbg,my $blk,my $colxy,my $coln)=(0,0,0,1);
-(my $size,my $xsize)=("","");
+my $size="";
+my $outopt="";
 my $multiplot=-1;
 my $infile="";
 
@@ -42,6 +44,20 @@ if(""ne$infile){
 	close STDIN;
 	open STDIN,"<".$infile || die "could not open infile";
 }
+
+if(""eq$outtyps{$outtyp}){
+	open GP,">".$tmpdem;
+	print GP "show term\n";
+	close GP;
+	open GP,"gnuplot ".$tmpdem." 2>&1 |";
+	while(<GP>){
+		chomp $_;
+		$outtyps{$outtyp}=$1 if $_=~/terminal type is +([^ ]*) *$/;
+	}
+	close GP;
+	unlink $tmpdem;
+}
+$outtyps{$outtyp}="x11" if ""eq$outtyps{$outtyp};
 
 my @dat=();
 my $i=0;
@@ -99,32 +115,19 @@ while(1){
 	elsif($ARGV[0]eq"-ylabel"   ){ shift; $ylabel =shift;   }
 	elsif($ARGV[0]eq"-title"    ){ shift; $gpcfg .="set title \"".(shift)."\"\n"; $gpcfgnf.="unset title\n"; }
 	elsif($ARGV[0]eq"-size"     ){ shift; $size   =shift;   }
-	elsif($ARGV[0]eq"-xsize"    ){ shift; $xsize  =shift;   }
+	elsif($ARGV[0]eq"-xsize"    ){ shift; $outopt.=" size ".(shift);   }
 	elsif($ARGV[0]eq"-color"    ){ shift; $gpcfg .=&readcolors(shift); }
 	elsif($ARGV[0]eq"-log"      ){ shift; $gpcfg .="set logscale ".(shift)."\n"; }
+	elsif($ARGV[0]eq"-outopt"   ){ shift; $outopt.=" ".(shift); }
 	elsif($ARGV[0]eq"-C"        ){ shift; $gpcfg .=(shift)."\n"; }
 	elsif($ARGV[0]eq"-c"        ){ shift; $gpcfg .=&readfile(shift); }
 	# deprecated
 	elsif($ARGV[0]eq"-2"        ){ shift; $colxy  =1;       }
 	elsif($ARGV[0]eq"-3"        ){ shift; $coln   =2;       }
 	elsif($ARGV[0]eq"-eps"      ){ shift; $outtyp ="eps";   }
-	elsif($ARGV[0]eq"-png"      ){ shift; $outtyp ="png"; $xsize=shift; }
+	elsif($ARGV[0]eq"-png"      ){ shift; $outtyp ="png"; $outtyp.=" size ".(shift); }
 	else{ last; }
 }
-
-if(""eq$outtyps{$outtyp}){
-	open GP,">".$tmpdem;
-	print GP "show term\n";
-	close GP;
-	open GP,"gnuplot ".$tmpdem." 2>&1 |";
-	while(<GP>){
-		chomp $_;
-		$outtyps{$outtyp}=$1 if $_=~/terminal type is +([^ ]*) *$/;
-	}
-	close GP;
-	unlink $tmpdem;
-}
-$outtyps{$outtyp}="x11" if ""eq$outtyps{$outtyp};
 
 open TMP,">".$tmpdat;
 foreach(@dat){
@@ -139,6 +142,7 @@ sub ptypinit {
 	}
 }
 
+$outopt=" ".$outopts{$outtyp} if ""eq$outopt;
 $maxnum++ if $colxy<0;
 $coln=$maxnum if !$coln;
 $nbg=1 if "x11"ne$outtyp;
@@ -176,6 +180,7 @@ sub usage {
 	print "  -log AXIS       enable logscale (AXIS: x|y|xy)\n";
 	print "  -in INPUTFILE   read data form file instead of stdin\n";
 	print "  -out OUTFILE    define name of generated output file (extension specifies output type - eps|png|jpg|plot / only type is also possible)\n";
+	print "  -outopt OPT     output options (example for eps/tex: color, monochrome - see gnuplot terminal typ if supported\n";
 	print "  -c GPCFG        include file GPCFG in gnuplot script\n";
 	print "  -C GPCMD        include command GPCMD in gnuplot script\n";
 	print "  COLNAME         sorted list of column titles\n";
@@ -194,9 +199,7 @@ if($blk){
 }
 my $matrix = $ptyp=~/^(image)$/;
 $dem.=$gpcfg;
-$dem.="set term ".$outtyps{$outtyp};
-$dem.=" size ".$xsize if ""ne$xsize;
-$dem.="\n";
+$dem.="set term ".$outtyps{$outtyp}.$outopt."\n";
 $dem.="set output \"".$outbase.".".$outtyp."\n" if "x11"ne$outtyp;
 my $iplot=0;
 my @gpcfgi=();
@@ -252,7 +255,7 @@ $dem.="pause mouse\n";
 open GP,">".$tmpdem;
 print GP $dem;
 close GP;
-#print $dem;
+print $dem;
 
 exit if !$nbg && fork()!=0;
 
