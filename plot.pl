@@ -258,7 +258,7 @@ $dem.="pause mouse\n";
 open GP,">".$tmpdem;
 print GP $dem;
 close GP;
-print $dem;
+#print $dem;
 
 exit if !$nbg && fork()!=0;
 
