@@ -52,7 +52,7 @@ if(""eq$outtyps{$outtyp}){
 	open GP,"gnuplot ".$tmpdem." 2>&1 |";
 	while(<GP>){
 		chomp $_;
-		$outtyps{$outtyp}=$1 if $_=~/terminal type is +([^ ]*) *$/;
+		$outtyps{$outtyp}=$1 if $_=~/terminal type is +([^ ]*)\b/;
 	}
 	close GP;
 	unlink $tmpdem;
