@@ -52,7 +52,7 @@ if(""eq$outtyps{$outtyp}){
 	open GP,"gnuplot ".$tmpdem." 2>&1 |";
 	while(<GP>){
 		chomp $_;
-		$outtyps{$outtyp}=$1 if $_=~/terminal type is +([^ ]*)\b/;
+		$outtyps{$outtyp}=$1 if $_=~/terminal type is +([^ ]*) *$/;
 	}
 	close GP;
 	unlink $tmpdem;
@@ -111,7 +111,9 @@ while(1){
 	elsif($ARGV[0]eq"-xgrid"    ){ shift; $gpcfg .="set grid xtics\n"; }
 	elsif($ARGV[0]eq"-ygrid"    ){ shift; $gpcfg .="set grid ytics\n"; }
 	elsif($ARGV[0]eq"-xtics"    ){ shift; $gpcfg .=&readtics("xtics",shift); }
+	elsif($ARGV[0]eq"-x2tics"   ){ shift; $gpcfg .=&readtics("x2tics",shift); }
 	elsif($ARGV[0]eq"-ytics"    ){ shift; $gpcfg .=&readtics("ytics",shift); }
+	elsif($ARGV[0]eq"-y2tics"   ){ shift; $gpcfg .=&readtics("y2tics",shift); }
 	elsif($ARGV[0]eq"-xlabel"   ){ shift; $gpcfgl.="set xlabel \"".(shift)."\"\n"; }
 	elsif($ARGV[0]eq"-ylabel"   ){ shift; $ylabel =shift;   }
 	elsif($ARGV[0]eq"-title"    ){ shift; $gpcfg .="set title \"".(shift)."\"\n"; $gpcfgnf.="unset title\n"; }
@@ -120,6 +122,7 @@ while(1){
 	elsif($ARGV[0]eq"-color"    ){ shift; $gpcfg .=&readlinestyles(shift,"lc rgb \"#%s\""); }
 	elsif($ARGV[0]eq"-style"    ){ shift; $gpcfg .=&readlinestyles(shift); }
 	elsif($ARGV[0]eq"-log"      ){ shift; $gpcfg .="set logscale ".(shift)."\n"; }
+	elsif($ARGV[0]eq"-key"      ){ shift; $gpcfg .="set key ".(shift)."\n"; }
 	elsif($ARGV[0]eq"-outopt"   ){ shift; $outopt.=" ".(shift); }
 	elsif($ARGV[0]eq"-C"        ){ shift; $gpcfg .=(shift)."\n"; }
 	elsif($ARGV[0]eq"-c"        ){ shift; $gpcfg .=&readfile(shift); }
@@ -169,6 +172,8 @@ sub usage {
 	print "  -multiplot N    use every N columns for a new subplot\n";
 	print "  -xrange MIN:MAX define x-axis range\n";
 	print "  -yrange MIN:MAX define y-axis range\n";
+	print "  -x2tics [P:]L,...\n";
+	print "  -y2tics [P:]L,...\n";
 	print "  -xtics [P:]L,...\n";
 	print "  -ytics [P:]L,...places labels L at position P (\"0.5:hallo,0.8:welt\" or \"hallo,welt\")\n";
 	print "  -xlabel TXT     label for x-axis\n";
@@ -181,6 +186,7 @@ sub usage {
 	print "  -color C,C,...  define colors (exa: ff0000,00ff000)\n";
 	print "  -style T:V,V,...define line styles (exa: pt:1,2,3 / lw:2,2,1) - see gnuplot: set style line\n";
 	print "  -log AXIS       enable logscale (AXIS: x|y|xy)\n";
+	print "  -key ARG        modifiy the key (example: -key off)\n";
 	print "  -in INPUTFILE   read data form file instead of stdin\n";
 	print "  -out OUTFILE    define name of generated output file (extension specifies output type - eps|png|jpg|plot / only type is also possible)\n";
 	print "  -outopt OPT     output options (example for eps/tex: color, monochrome - see gnuplot terminal typ if supported\n";
