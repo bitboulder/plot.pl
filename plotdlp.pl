@@ -13,9 +13,9 @@ unshift @INC,dirname($pname);
 require hlp;
 
 if(!@ARGV){
-	print "Usage: $0 FILE            PLOT-OPTIONS\n";
-	print "Usage: $0 FILE:FIELD      PLOT-OPTIONS\n";
-	print "Usage: $0 FILE:TYPE:FIELD PLOT-OPTIONS\n";
+	print "Usage: $0 FILE            [-dlp \"SKRIPT\"] PLOT-OPTIONS\n";
+	print "Usage: $0 FILE:FIELD      [-dlp \"SKRIPT\"] PLOT-OPTIONS\n";
+	print "Usage: $0 FILE:TYPE:FIELD [-dlp \"SKRIPT\"] PLOT-OPTIONS\n";
 	exit 1;
 }
 
@@ -32,14 +32,19 @@ if(@fdata>=2 && (my $t=pop @fdata)ne""){
 }
 $fdata=join ":",@fdata;
 
+my $skript="";
+if($ARGV[0]eq"-dlp"){ shift; $skript=shift; }
+
 my $tmpxtp=&hlp::gettmp("xtp");
 my $tmptxt=&hlp::gettmp("txt");
 
 open FD,">".$tmpxtp;
 print FD $ftyp." o;\n";
 print FD "\"".$fdata."\" o -restore;\n";
-print FD $ffld." ' ' ".$ffld." =;\n"; # TODO remove non-numeric components
-print FD "\"".$tmptxt."\" \"ascii\" ".$ffld." stdfile -export\n";
+print FD "data x;\n";
+print FD $ffld." ' ' x =;\n"; # TODO remove non-numeric components
+print FD $skript;
+print FD "\"".$tmptxt."\" \"ascii\" x stdfile -export\n";
 print FD "quit;\n";
 close FD;
 
