@@ -94,7 +94,6 @@ if($outtyps{$outtyp}eq"plot"){
 
 &usage() if $maxnum<1;
 unshift @ARGV,"-nox" if $maxnum==1;
-$gpcfg.=&readlinestyles("lt:1");
 
 while(1){
 	if   ($ARGV[0]eq"-nbg"      ){ shift; $nbg    =1;       }
@@ -119,7 +118,7 @@ while(1){
 	elsif($ARGV[0]eq"-title"    ){ shift; $gpcfg .="set title \"".(shift)."\"\n"; $gpcfgnf.="unset title\n"; }
 	elsif($ARGV[0]eq"-size"     ){ shift; $size   =shift;   }
 	elsif($ARGV[0]eq"-xsize"    ){ shift; $outopt.=" size ".(shift);   }
-	elsif($ARGV[0]eq"-color"    ){ shift; $gpcfg .=&readlinestyles(shift,"lc rgb \"#%s\""); }
+	elsif($ARGV[0]eq"-color"    ){ shift; $gpcfg .=&readlinestyles(shift,"lt 1 lc rgb \"#%s\""); }
 	elsif($ARGV[0]eq"-style"    ){ shift; $gpcfg .=&readlinestyles(shift); }
 	elsif($ARGV[0]eq"-log"      ){ shift; $gpcfg .="set logscale ".(shift)."\n"; }
 	elsif($ARGV[0]eq"-key"      ){ shift; $gpcfg .="set key ".(shift)."\n"; }
