@@ -16,7 +16,7 @@ my $tmpdat=&hlp::gettmp("dat");
 my $tmpdem=&hlp::gettmp("dem");
 my $maxnum=0;
 
-my %outtyps=("x11"=>"", "eps"=>"postscript eps", "tex"=>"epslatex", "png"=>"png", "jpg"=>"jpeg", "plot"=>"plot");
+my %outtyps=("x11"=>"", "eps"=>"postscript eps", "tex"=>"epslatex", "png"=>"png", "jpg"=>"jpeg", "plot"=>"plot", "dem"=>"");
 my %outopts=(           "eps"=>"color",          "tex"=>"color");
 my $outtyp="x11";
 my $outbase="plot";
@@ -188,6 +188,7 @@ sub usage {
 	print "  -key ARG        modifiy the key (example: -key off)\n";
 	print "  -in INPUTFILE   read data form file instead of stdin\n";
 	print "  -out OUTFILE    define name of generated output file (extension specifies output type - eps|png|jpg|plot / only type is also possible)\n";
+	print "                  dem is a special output type which uses the previous configured one but outputs a dem- and a dat-file for gnuplot\n";
 	print "  -outopt OPT     output options (example for eps/tex: color, monochrome - see gnuplot terminal typ if supported\n";
 	print "  -c GPCFG        include file GPCFG in gnuplot script\n";
 	print "  -C GPCMD        include command GPCMD in gnuplot script\n";
@@ -265,6 +266,8 @@ print GP $dem;
 close GP;
 #print $dem;
 
+exit 0 if $tmpdem eq $outbase.".dem";
+
 exit if !$nbg && fork()!=0;
 
 system "gnuplot ".$tmpdem;
@@ -274,16 +277,22 @@ unlink $tmpdem;
 
 sub readout {
 	my $arg=shift;
+	my $otn="";
 	if($arg=~/^(.*)\.([a-z]{3,4})$/){
 		$outbase=$1;
-		$outtyp=$2;
-		die "unknown outtyp: $outtyp" if !exists $outtyps{$outtyp};
+		$otn=$2;
+		die "unknown outtyp: $otn" if !exists $outtyps{$otn};
 	}elsif(exists $outtyps{$arg}){
-		$outtyp=$arg;
+		$otn=$arg;
 	}else{
 		$outbase=$arg;
 	}
-	system "mkdir -p \"".dirname($outbase)."\""; 
+	system "mkdir -p \"".dirname($outbase)."\"";
+	return if ""eq$otn;
+	if("dem"eq$otn){
+		$tmpdat=$outbase.".dat";
+		$tmpdem=$outbase.".dem";
+	}else{ $outtyp=$otn; }
 }
 
 sub readfile {
