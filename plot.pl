@@ -14,6 +14,7 @@ require hlp;
 
 my $tmpdat=&hlp::gettmp("dat");
 my $tmpdem=&hlp::gettmp("dem");
+my $outdem=0;
 my $maxnum=0;
 
 my %outtyps=("x11"=>"", "eps"=>"postscript eps", "tex"=>"epslatex", "png"=>"png", "jpg"=>"jpeg", "plot"=>"plot", "dem"=>"");
@@ -266,7 +267,7 @@ print GP $dem;
 close GP;
 #print $dem;
 
-exit 0 if $tmpdem eq $outbase.".dem";
+exit 0 if $outdem;
 
 exit if !$nbg && fork()!=0;
 
@@ -277,22 +278,25 @@ unlink $tmpdem;
 
 sub readout {
 	my $arg=shift;
-	my $otn="";
+	my $ooutbase=$outbase;
+	my $oouttyp=$outtyp;
 	if($arg=~/^(.*)\.([a-z]{3,4})$/){
 		$outbase=$1;
-		$otn=$2;
-		die "unknown outtyp: $otn" if !exists $outtyps{$otn};
+		$outtyp=$2;
+		die "unknown outtyp: $outtyp" if !exists $outtyps{$outtyp};
 	}elsif(exists $outtyps{$arg}){
-		$otn=$arg;
+		$outtyp=$arg;
 	}else{
 		$outbase=$arg;
 	}
 	system "mkdir -p \"".dirname($outbase)."\"";
-	return if ""eq$otn;
-	if("dem"eq$otn){
+	if("dem"eq$outtyp){
+		$outdem=1;
 		$tmpdat=$outbase.".dat";
 		$tmpdem=$outbase.".dem";
-	}else{ $outtyp=$otn; }
+		$outbase=$ooutbase;
+		$outtyp=$oouttyp;
+	}
 }
 
 sub readfile {
