@@ -46,7 +46,16 @@ for(my $i=@ARGV-1;$i>=0;$i--){
 
 if(""ne$infile){
 	close STDIN;
+	($infile,my @args)=split /:/,$infile if ! -f $infile;
 	open STDIN,"<".$infile || die "could not open infile";
+	read STDIN,my $head,4;
+	seek STDIN,0,0;
+	if("<?xm"eq$head || "DN\03\00"eq$head || "\37\213\10\0"eq$head){
+		close STDIN;
+		$infile=&indlp($infile,@args);
+		open STDIN,"<".$infile || die "could not open tmp-infile";
+		$infile.="[UNLINK]";
+	}
 }
 
 if(""eq$outtyps{$outtyp}){
@@ -83,6 +92,7 @@ while(<STDIN>){
 	$maxnum=$num if $maxnum<$num;
 }
 close STDIN if ""ne$infile;
+unlink $1 if $infile=~/^(.*)\[UNLINK\]$/;
 
 if($outtyps{$outtyp}eq"plot"){
 	foreach(@ARGV){ $_=~s/ /__/g; }
@@ -195,6 +205,11 @@ sub usage {
 	print "  -log AXIS       enable logscale (AXIS: x|y|xy)\n";
 	print "  -key ARG        modifiy the key (example: -key off)\n";
 	print "  -in INPUTFILE   read data form file instead of stdin\n";
+	print "                  If the file is a dn3- or xml-file data file be converted by dlabpro.\n";
+	print "                  You can specify the file as:\n";
+	print "                   INPUTFILE              file should be of typ data\n";
+	print "                   INPUTFILE:FIELD        file should be of typ object and contain a data instance named FIELD\n";
+	print "                   INPUTFILE:TYP:FIELD    file should be of typ TYP and contain a data instance named FIELD\n";
 	print "  -out OUTFILE    define name of generated output file (extension specifies output type - eps|png|jpg|plot / only type is also possible)\n";
 	print "                  dem is a special output type which uses the previous configured one but outputs a dem- and a dat-file for gnuplot\n";
 	print "  -outopt OPT     output options (example for eps/tex: color, monochrome - see gnuplot terminal typ if supported\n";
@@ -347,6 +362,39 @@ sub readlinestyles {
 		$gp.=sprintf "set style line ".($i+1)." ".$style."\n",$arg if ""ne$arg;
 	}
 	return $gp;
+}
+
+sub indlp {
+	my $tmpxtp=&gettmp("xtp");
+	my $tmptxt=&gettmp("txt");
+
+	my @fdata=@_;
+	my $ftyp="data";
+	my $ffld="o";
+	if(@fdata>=2 && (my $t=pop @fdata)ne""){
+		$ftyp="object";
+		$ffld.=".".$t;
+	}
+	if(@fdata>=2 && (my $t=pop @fdata)ne""){
+		$ftyp=$t;
+	}
+	my $fdata=join ":",@fdata;
+
+	my $skript="";
+
+	open FD,">".$tmpxtp;
+	print FD $ftyp." o;\n";
+	print FD "\"".$fdata."\" o -restore;\n";
+	print FD "data x;\n";
+	print FD $ffld." ' ' x =;\n"; # TODO remove non-numeric components
+	print FD $skript;
+	print FD "\"".$tmptxt."\" \"ascii\" x stdfile -export\n";
+	print FD "quit;\n";
+	close FD;
+
+	system "dlabpro $tmpxtp";
+	unlink $tmpxtp;
+	return $tmptxt;
 }
 
 1;
