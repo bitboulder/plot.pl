@@ -2,18 +2,19 @@
 
 use strict;
 use File::Basename;
-my $pname=$0;
-$pname=$ENV{"_"} if ! $pname;
-if(-l $pname){
-	my $l=readlink $pname;
-	$l=dirname($pname)."/".$l if $l!~/^[\/\\]/;
-	$pname=$l;
-}
-unshift @INC,dirname($pname);
-require hlp;
 
-my $tmpdat=&hlp::gettmp("dat");
-my $tmpdem=&hlp::gettmp("dem");
+my @tmpdir=($ENV{"TEMP"},$ENV{"TMP"},"/dev/shm","/tmp");
+while(@tmpdir && ! -d $tmpdir[0]){ shift @tmpdir; }
+die "No temporary directory found" if !@tmpdir;
+$tmpdir[0]=~s/\\/\//g;
+
+sub gettmp {
+	my $ext=shift;
+	return $tmpdir[0]."/".basename($0).".".$$.".".$ext;
+}
+
+my $tmpdat=&gettmp("dat");
+my $tmpdem=&gettmp("dem");
 my $outdem=0;
 my $maxnum=0;
 
@@ -32,6 +33,8 @@ my $size="";
 my $outopt="";
 my $multiplot=-1;
 my $infile="";
+
+unshift @ARGV,"-in" if @ARGV==1 && $ARGV[0]=~/^.+\.plot/i;
 
 for(my $i=@ARGV-1;$i>=0;$i--){
 	my $del=0;
@@ -65,9 +68,11 @@ my $i=0;
 while(<STDIN>){
 	if($_=~/^(.*)#(.*)$/){
 		$_=$1;
-		foreach(split / +/,$2){
-			$_=~s/__/ /g;
-			push @ARGV,$_;
+		if("!"ne substr $2,0,1){
+			foreach(split / +/,$2){
+				$_=~s/__/ /g;
+				push @ARGV,$_;
+			}
 		}
 	}
 	$_=~s/^ +//g;
@@ -80,16 +85,18 @@ while(<STDIN>){
 close STDIN if ""ne$infile;
 
 if($outtyps{$outtyp}eq"plot"){
-	open PL,">".$outbase.".".$outtyp;
 	foreach(@ARGV){ $_=~s/ /__/g; }
 	for(my $i=@ARGV-1;$i>0;$i--){
 		next if $ARGV[$i-1]!~/^-/ || $ARGV[$i]=~/^-/;
 		$ARGV[$i-1].=" ".$ARGV[$i];
 		splice @ARGV,$i,1;
 	}
+	open PL,">".$outbase.".".$outtyp;
+	print PL "#!/usr/bin/env plot.pl\n";
 	foreach(@ARGV){ print PL "#$_\n"; }
 	foreach(@dat){ print PL $_; }
 	close PL;
+	chmod 0755,$outbase.".".$outtyp;
 	exit 0;
 }
 

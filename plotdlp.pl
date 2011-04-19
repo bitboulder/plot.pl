@@ -2,15 +2,16 @@
 
 use strict;
 use File::Basename;
-my $pname=$0;
-$pname=$ENV{"_"} if ! $pname;
-if(-l $pname){
-	my $l=readlink $pname;
-	$l=dirname($pname)."/".$l if $l!~/^[\/\\]/;
-	$pname=$l;
+
+my @tmpdir=($ENV{"TEMP"},$ENV{"TMP"},"/dev/shm","/tmp");
+while(@tmpdir && ! -d $tmpdir[0]){ shift @tmpdir; }
+die "No temporary directory found" if !@tmpdir;
+$tmpdir[0]=~s/\\/\//g;
+
+sub gettmp {
+	my $ext=shift;
+	return $tmpdir[0]."/".basename($0).".".$$.".".$ext;
 }
-unshift @INC,dirname($pname);
-require hlp;
 
 if(!@ARGV){
 	print "Usage: $0 FILE            [-dlp \"SKRIPT\"] PLOT-OPTIONS\n";
@@ -35,8 +36,8 @@ $fdata=join ":",@fdata;
 my $skript="";
 if($ARGV[0]eq"-dlp"){ shift; $skript=shift; }
 
-my $tmpxtp=&hlp::gettmp("xtp");
-my $tmptxt=&hlp::gettmp("txt");
+my $tmpxtp=&gettmp("xtp");
+my $tmptxt=&gettmp("txt");
 
 open FD,">".$tmpxtp;
 print FD $ftyp." o;\n";
