@@ -232,6 +232,7 @@ if($blk){
 my $matrix = $ptyp=~/^(image)$/;
 $dem.=$gpcfg;
 $dem.="set term ".$outtyps{$outtyp}.$outopt."\n";
+$dem.="set encoding utf8\n";
 $dem.="set output \"".$outbase.".".$outtyp."\n" if "x11"ne$outtyp;
 my $iplot=0;
 my @gpcfgi=();
