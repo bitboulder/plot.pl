@@ -210,8 +210,9 @@ sub usage {
 	print "                  If the file is a dn3- or xml-file data file be converted by dlabpro.\n";
 	print "                  You can specify the file as:\n";
 	print "                   INPUTFILE              file should be of typ data\n";
-	print "                   INPUTFILE:FIELD        file should be of typ object and contain a data instance named FIELD\n";
+	print "                   INPUTFILE::FIELD       file should be of typ object and contain a data instance named FIELD\n";
 	print "                   INPUTFILE:TYP:FIELD    file should be of typ TYP and contain a data instance named FIELD\n";
+	print "                   INPUTFILE:::CODE       execute CODE on restored data instance (is named 'x')\n";
 	print "  -out OUTFILE    define name of generated output file (extension specifies output type - eps|png|jpg|plot / only type is also possible)\n";
 	print "                  dem is a special output type which uses the previous configured one but outputs a dem- and a dat-file for gnuplot\n";
 	print "  -outopt OPT     output options (example for eps/tex: color, monochrome - see gnuplot terminal typ if supported\n";
@@ -374,13 +375,10 @@ sub indlp {
 	my @fdata=@_;
 	my $ftyp="data";
 	my $ffld="o";
-	if(@fdata>=2 && (my $t=pop @fdata)ne""){
-		$ftyp="object";
-		$ffld.=".".$t;
-	}
-	if(@fdata>=2 && (my $t=pop @fdata)ne""){
-		$ftyp=$t;
-	}
+	my $fcode="";
+	if(@fdata>=2 && (my $t=splice @fdata,1,1)ne""){ $ftyp=$t; }
+	if(@fdata>=2 && (my $t=splice @fdata,1,1)ne""){ $ftyp="object"; $ffld.=".".$t; }
+	if(@fdata>=2 && (my $t=splice @fdata,1,1)ne""){ $fcode=$t; }
 	my $fdata=join ":",@fdata;
 
 	my $skript="";
@@ -390,6 +388,7 @@ sub indlp {
 	print FD "\"".$fdata."\" o -restore;\n";
 	print FD "data x;\n";
 	print FD $ffld." ' ' x =;\n"; # TODO remove non-numeric components
+	print FD $fcode."\n";
 	print FD $skript;
 	print FD "\"".$tmptxt."\" \"ascii\" x stdfile -export\n";
 	print FD "quit;\n";
