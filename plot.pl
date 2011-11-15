@@ -164,6 +164,20 @@ sub ptypinit {
 	if("image"eq$ptyp){
 		$coln=0;
 	}
+	if("imagevalue"eq$ptyp){
+		$ptyp="image";
+		$gpcfg.="unset colorbox\n";
+		my @val=sort {$a<=>$b} split /[ \n\r]+/,join "",@dat;
+		(my $min,my $max)=($val[0],$val[-1]);
+		for(my $y=0;$y<@dat;$y++){
+			my @line=split / +/,$dat[$y];
+			$line[-1]=~s/[\n\r]+$//;
+			for(my $x=0;$x<@line;$x++){
+				my $col=($line[$x]-$min)/($max-$min)<0.5 ? "white" : "black";
+				$gpcfg.="set label \"".$line[$x]."\" at ".$x.",".$y." center front textcolor rgbcolor \"".$col."\"\n";
+			}
+		}
+	}
 }
 
 $outopt=" ".$outopts{$outtyp} if ""eq$outopt;
@@ -180,6 +194,7 @@ sub usage {
 	print "       lines (def.) use lines\n";
 	print "       boxes        use boxes (for histogram,recognition result,...)\n";
 	print "       image        use image (for sonagram,confusion matrix,...)\n";
+	print "       imagevalue   use image with values textual labels\n";
 	print "       any other gnuplot plotting style (points,dots,linespoints,...)\n";
 	print "  -nbg            no background mode (donot detach from terminal)\n";
 	print "  -blk            use blocks instead of lines\n";
