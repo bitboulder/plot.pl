@@ -285,7 +285,7 @@ while($col<$maxnum){
   my $ls   = 1;
   my $scol = 0;
   while($col<$maxnum && $scol<$multiplot){
-  	my $title = $ARGV[$scol];
+  	my $title = shift;
   	my $using = ($colxy ? ++$col : 1);
     for(my $i=0;$i<$coln;$i++){ $using.=":".(++$col); }
   	$dem.=" \"".$tmpdat."\"";
@@ -295,7 +295,7 @@ while($col<$maxnum){
   	$dem.=" with ".$ptyp;
   	$dem.=" ls ".($ls++) if !$matrix;
   	$dem.=",";
-    $scol++;
+    $scol+=$coln+($colxy?1:0);
   }
   $dem=~s/,$//; $dem.="\n";
 }
