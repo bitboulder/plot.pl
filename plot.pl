@@ -75,10 +75,10 @@ $outtyps{$outtyp}="x11" if ""eq$outtyps{$outtyp};
 my @dat=();
 my $i=0;
 while(<STDIN>){
+	$_=~s/##.*//;
 	if($_=~/^([^#]*)#(.*)$/){
 		$_=$1;
 		my $arg=$2;
-		$arg=~s/##.*//;
 		if("!"ne substr $arg,0,1){
 			foreach(split / +/,$arg){
 				$_=~s/__/ /g;
