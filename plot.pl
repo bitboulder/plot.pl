@@ -302,7 +302,7 @@ while($col<$maxnum){
 if($nplot>1){
   $dem.="unset multiplot\n";
 }
-$dem.="pause mouse\n";
+$dem.="pause mouse ".("wxt"eq$outtyps{$outtyp}?"button2":"")."\n";
 open GP,">".$tmpdem;
 print GP $dem;
 close GP;
