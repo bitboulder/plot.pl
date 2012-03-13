@@ -18,7 +18,7 @@ my $tmpdem=&gettmp("dem");
 my $outdem=0;
 my $maxnum=0;
 
-my %outtyps=("x11"=>"", "eps"=>"postscript eps", "tex"=>"epslatex", "png"=>"png", "jpg"=>"jpeg", "plot"=>"plot", "dem"=>"");
+my %outtyps=("x11"=>"", "eps"=>"postscript eps", "tex"=>"epslatex", "pdf"=>"pdf", "png"=>"png", "jpg"=>"jpeg", "plot"=>"plot", "dem"=>"");
 my %outopts=(           "eps"=>"color",          "tex"=>"color");
 my $outtyp="x11";
 my $outbase="plot";
@@ -26,13 +26,13 @@ my $outbase="plot";
 my $gpcfg="";
 my $gpcfgnf="";
 my $gpcfgl="";
-my $ylabel="";
 my $ptyp="lines";
 (my $nbg,my $blk,my $colxy,my $coln)=(0,0,0,1);
 my $size="";
 my $outopt="";
 my $multiplot=-1;
 my $infile="";
+my $demfix=undef;
 
 unshift @ARGV,"-in" if @ARGV==1 && $ARGV[0]=~/^.+\.plot/i;
 
@@ -41,6 +41,7 @@ for(my $i=@ARGV-1;$i>=0;$i--){
 	if($ARGV[$i]eq"-h"){ &usage(); }
 	elsif($ARGV[$i]eq"-in"){ $infile=$ARGV[$i+1]; $del=2; }
 	elsif($ARGV[$i]eq"-out"){ &readout($ARGV[$i+1]); $del=2;  }
+	elsif($ARGV[$i]eq"-dem"){ $demfix=""; $del=1; }
 	splice @ARGV,$i,$del if $del>0;
 }
 
@@ -80,9 +81,11 @@ while(<STDIN>){
 		$_=$1;
 		my $arg=$2;
 		if("!"ne substr $arg,0,1){
-			foreach(split / +/,$arg){
-				$_=~s/__/ /g;
-				push @ARGV,$_;
+			if(defined $demfix){ $demfix.=$arg."\n"; }else{
+				foreach(split / +/,$arg){
+					$_=~s/__/ /g;
+					push @ARGV,$_;
+				}
 			}
 		}
 	}
@@ -134,7 +137,7 @@ while(1){
 	elsif($ARGV[0]eq"-ytics"    ){ shift; $gpcfg .=&readtics("ytics",shift); }
 	elsif($ARGV[0]eq"-y2tics"   ){ shift; $gpcfg .=&readtics("y2tics",shift); }
 	elsif($ARGV[0]eq"-xlabel"   ){ shift; $gpcfgl.="set xlabel \"".(shift)."\"\n"; }
-	elsif($ARGV[0]eq"-ylabel"   ){ shift; $ylabel =shift;   }
+	elsif($ARGV[0]eq"-ylabel"   ){ shift; $gpcfg .="set ylabel \"".(shift)."\"\n"; }
 	elsif($ARGV[0]eq"-title"    ){ shift; $gpcfg .="set title \"".(shift)."\"\n"; $gpcfgnf.="unset title\n"; }
 	elsif($ARGV[0]eq"-size"     ){ shift; $size   =shift;   }
 	elsif($ARGV[0]eq"-xsize"    ){ shift; $outopt.=" size ".(shift);   }
@@ -185,7 +188,7 @@ $maxnum++ if $colxy<0;
 $coln=$maxnum if !$coln;
 $nbg=1 if "x11"ne$outtyp;
 $multiplot=$maxnum if $multiplot<0;
-my $nplot=$multiplot<$maxnum ? int(($maxnum-($colxy<0?1:0))/$multiplot) : 1;
+my $nplot=$multiplot<$maxnum ? &ceil(($maxnum-($colxy==0?1:0))/$multiplot) : 1;
 $colxy=0 if $colxy<0;
 
 sub usage {
@@ -211,7 +214,7 @@ sub usage {
 	print "  -xtics [P:]L,...\n";
 	print "  -ytics [P:]L,...places labels L at position P (\"0.5:hallo,0.8:welt\" or \"hallo,welt\")\n";
 	print "  -xlabel TXT     label for x-axis\n";
-	print "  -ylabel TXT     label for y-axis (multiple labels for multiplot: seperated by ,)\n";
+	print "  -ylabel TXT     label for y-axis\n";
 	print "  -title TXT      plot title\n";
 	print "  -xgrid          x-axis grid\n";
 	print "  -ygrid          y-axis grid\n";
@@ -231,10 +234,11 @@ sub usage {
 	print "  -out OUTFILE    define name of generated output file (extension specifies output type - eps|png|jpg|plot / only type is also possible)\n";
 	print "                  dem is a special output type which uses the previous configured one but outputs a dem- and a dat-file for gnuplot\n";
 	print "  -outopt OPT     output options (example for eps/tex: color, monochrome - see gnuplot terminal typ if supported\n";
+	print "  -dem            the dem-file is only build of every outcommented line in infile and the output options\n";
 	print "  -c GPCFG        include file GPCFG in gnuplot script\n";
 	print "  -C GPCMD        include command GPCMD in gnuplot script\n";
 	print "  COLNAME         sorted list of column titles\n";
-	print "All options can also be included in the input file.\n";
+	print "All options can also be included in the input file (except -h,-in,-out,-dem).\n";
 	print "The options sections start with '#' and will be splitted at spaces into single options.\n";
 	print "To use spaces within the options or arguments you need to use '__'\n";
 	exit 0;
@@ -249,9 +253,11 @@ if($blk){
 }
 my $matrix = $ptyp=~/^(image)$/;
 $dem.=$gpcfg;
-$dem.="set term ".$outtyps{$outtyp}.$outopt."\n";
-$dem.="set encoding utf8\n";
-$dem.="set output \"".$outbase.".".$outtyp."\n" if "x11"ne$outtyp;
+my $demout="set term ".$outtyps{$outtyp}.$outopt."\n";
+$demout.="set encoding utf8\n";
+$demout.="set output \"".$outbase.".".$outtyp."\n" if "x11"ne$outtyp;
+$dem.=$demout;
+$demfix=$demout.$demfix if defined $demfix;
 my $iplot=0;
 my @gpcfgi=();
 if($nplot>1){
@@ -264,15 +270,6 @@ if($nplot>1){
   $gpcfgl.="set format x\n";
   $gpcfgl.="set bmargin\n";
   $gpcfgl.=sprintf "set size 1,%.5f\n",0.9/$nplot+0.02;
-  my @ylabel=split /,/,$ylabel;
-  for(my $i=0;$i<$nplot;$i++){
-	  my $lab="";
-	  $lab=$ylabel[$i] if $i<@ylabel;
-	  $lab=$ylabel if @ylabel<2;
-	  $gpcfgi[$i] = ""ne$lab ? "set ylabel \"".$lab."\"\n" : "unset ylabel\n";
-  }
-}else{
-  $dem.="set ylabel \"$ylabel\"\n" if ""ne$ylabel;
 }
 my $ncol = $colxy+$coln; # number of colums per line
 my $col  = $colxy ? 0 : 1; # first column
@@ -301,6 +298,10 @@ while($col<$maxnum){
 }
 if($nplot>1){
   $dem.="unset multiplot\n";
+}
+if(defined $demfix){
+	$demfix=~s/%DAT%/$tmpdat/g;
+	$dem=$demfix;
 }
 $dem.="pause mouse ".("wxt"eq$outtyps{$outtyp}?"button2":"")."\n";
 open GP,">".$tmpdem;
@@ -409,6 +410,12 @@ sub indlp {
 	system "dlabpro $tmpxtp";
 	unlink $tmpxtp;
 	return $tmptxt;
+}
+
+sub ceil {
+	my $x=shift;
+	my $xi=int($x);
+	return $xi+($xi==$x?0:1);
 }
 
 1;
