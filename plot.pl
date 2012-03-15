@@ -85,7 +85,8 @@ while(<STDIN>){
 		my $arg=$2;
 		if("!"ne substr $arg,0,1){
 			if(defined $demfix){ $demfix.=$arg."\n"; }else{
-				foreach(split / +/,$arg){
+				my @arg = $arg=~/^-/ && $arg!~/ -/ ? (split / +/,$arg,2) : (split / +/,$arg);
+				foreach(@arg){
 					$_=~s/__/ /g;
 					push @ARGV,$_;
 				}
@@ -247,6 +248,7 @@ sub usage {
 	print "  -C GPCMD        include command GPCMD in gnuplot script\n";
 	print "All options can also be included in the input file (except -h,-in,-out,-dem).\n";
 	print "The options sections start with '#' and will be splitted at spaces into single options.\n";
+	print "If there is a line starting with '#-' and no occurance of ' -' it is only splitted at the first space.\n";
 	print "To use spaces within the options or arguments you need to use '__'\n";
 	exit 0;
 }
