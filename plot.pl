@@ -33,8 +33,9 @@ my $outopt="";
 my $multiplot=-1;
 my $infile="";
 my $demfix=undef;
-
 my $readtics_typ="r";
+my @cnames=();
+my %stylecnt=();
 
 unshift @ARGV,"-in" if @ARGV==1 && $ARGV[0]=~/^.+\.plot/i;
 
@@ -147,6 +148,7 @@ while(1){
 	elsif($ARGV[0]eq"-outopt"   ){ shift; $outopt.=" ".(shift); }
 	elsif($ARGV[0]eq"-C"        ){ shift; $gpcfg .=(shift)."\n"; }
 	elsif($ARGV[0]eq"-c"        ){ shift; $gpcfg .=&readfile(shift); }
+	elsif($ARGV[0]eq"-cn"       ){ shift; push @cnames,(shift); }
 	# deprecated
 	elsif($ARGV[0]eq"-2"        ){ shift; $colxy  =1;       }
 	elsif($ARGV[0]eq"-3"        ){ shift; $coln   =2;       }
@@ -154,6 +156,8 @@ while(1){
 	elsif($ARGV[0]eq"-png"      ){ shift; $outtyp ="png"; $outtyp.=" size ".(shift); }
 	else{ last; }
 }
+foreach my $cname (@ARGV){ die "unkown option ".$cname if $cname=~/^-/; }
+push @cnames,@ARGV;
 
 open TMP,">".$tmpdat;
 foreach(@dat){
@@ -217,15 +221,17 @@ sub usage {
 	print "                  places labels beginning at position S with increment I up to E\n";
 	print "  -xlabel TXT     label for x-axis\n";
 	print "  -ylabel TXT     label for y-axis\n";
-	print "  -title TXT      plot title\n";
 	print "  -xgrid          x-axis grid\n";
 	print "  -ygrid          y-axis grid\n";
 	print "  -size W,H       set drawing size for gnuplot\n";
 	print "  -xsize W,H      set output size of drawing in pixels (for eps use: Wcm,Hcm)\n";
 	print "  -color C,C,...  define colors (exa: ff0000,00ff000)\n";
 	print "  -style T:V,V,...define line styles (exa: pt:1,2,3 / lw:2,2,1) - see gnuplot: set style line\n";
+	print "                  for -style and -color the options can be continued by anothers\n";
 	print "  -log AXIS       enable logscale (AXIS: x|y|xy)\n";
 	print "  -key ARG        modifiy the key (example: -key off)\n";
+	print "  -cn TITLE       add column title\n";
+	print "  -title TXT      plot title\n";
 	print "  -in INPUTFILE   read data form file instead of stdin\n";
 	print "                  If the file is a dn3- or xml-file data file be converted by dlabpro.\n";
 	print "                  You can specify the file as:\n";
@@ -239,7 +245,6 @@ sub usage {
 	print "  -dem            the dem-file is only build of every outcommented line in infile and the output options\n";
 	print "  -c GPCFG        include file GPCFG in gnuplot script\n";
 	print "  -C GPCMD        include command GPCMD in gnuplot script\n";
-	print "  COLNAME         sorted list of column titles\n";
 	print "All options can also be included in the input file (except -h,-in,-out,-dem).\n";
 	print "The options sections start with '#' and will be splitted at spaces into single options.\n";
 	print "To use spaces within the options or arguments you need to use '__'\n";
@@ -284,7 +289,7 @@ while($col<$maxnum){
   my $ls   = 1;
   my $scol = 0;
   while($col<$maxnum && $scol<$multiplot){
-  	my $title = shift;
+  	my $title = shift @cnames;
   	my $using = ($colxy ? ++$col : 1);
     for(my $i=0;$i<$coln;$i++){ $using.=":".(++$col); }
   	$dem.=" \"".$tmpdat."\"";
@@ -387,11 +392,12 @@ sub readlinestyles {
 	my $gp="";
 	my @args=split /,/,$args;
 	my $num=@args;
-	$num=$maxnum+1 if @args==1;
+	$num=$maxnum+1 if @args==1 && !exists $stylecnt{$style};
 	for(my $i=0;$i<$num;$i++){
 		my $arg = @args==1 ? $args[0] : $args[$i];
-		$gp.=sprintf "set style line ".($i+1)." ".$style."\n",$arg if ""ne$arg;
+		$gp.=sprintf "set style line ".($i+1+$stylecnt{$style})." ".$style."\n",$arg if ""ne$arg;
 	}
+	$stylecnt{$style}+=@args;
 	return $gp;
 }
 
