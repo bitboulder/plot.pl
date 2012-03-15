@@ -34,6 +34,8 @@ my $multiplot=-1;
 my $infile="";
 my $demfix=undef;
 
+my $readtics_typ="r";
+
 unshift @ARGV,"-in" if @ARGV==1 && $ARGV[0]=~/^.+\.plot/i;
 
 for(my $i=@ARGV-1;$i>=0;$i--){
@@ -132,10 +134,7 @@ while(1){
 	elsif($ARGV[0]eq"-yrange"   ){ shift; $gpcfg .="set yrange [".(shift)."]\n"; }
 	elsif($ARGV[0]eq"-xgrid"    ){ shift; $gpcfg .="set grid xtics\n"; }
 	elsif($ARGV[0]eq"-ygrid"    ){ shift; $gpcfg .="set grid ytics\n"; }
-	elsif($ARGV[0]eq"-xtics"    ){ shift; $gpcfg .=&readtics("xtics",shift); }
-	elsif($ARGV[0]eq"-x2tics"   ){ shift; $gpcfg .=&readtics("x2tics",shift); }
-	elsif($ARGV[0]eq"-ytics"    ){ shift; $gpcfg .=&readtics("ytics",shift); }
-	elsif($ARGV[0]eq"-y2tics"   ){ shift; $gpcfg .=&readtics("y2tics",shift); }
+	elsif($ARGV[0]=~/^-([xy]2?tics)([ar]?)$/){ shift; $gpcfg .=&readtics($1,$2,shift); }
 	elsif($ARGV[0]eq"-xlabel"   ){ shift; $gpcfgl.="set xlabel \"".(shift)."\"\n"; }
 	elsif($ARGV[0]eq"-ylabel"   ){ shift; $gpcfg .="set ylabel \"".(shift)."\"\n"; }
 	elsif($ARGV[0]eq"-title"    ){ shift; $gpcfg .="set title \"".(shift)."\"\n"; $gpcfgnf.="unset title\n"; }
@@ -209,10 +208,13 @@ sub usage {
 	print "  -multiplot N    use every N columns for a new subplot\n";
 	print "  -xrange MIN:MAX define x-axis range\n";
 	print "  -yrange MIN:MAX define y-axis range\n";
-	print "  -x2tics [P:]L,...\n";
-	print "  -y2tics [P:]L,...\n";
-	print "  -xtics [P:]L,...\n";
-	print "  -ytics [P:]L,...places labels L at position P (\"0.5:hallo,0.8:welt\" or \"hallo,welt\")\n";
+	print "  -[xy]2?tics[ar]? P:L|L|P:,...\n";
+	print "                  places labels L at position P (\"0.5:hallo,0.8:welt\" or \"hallo,welt\")\n";
+	print "                  by obmitting position (L), the labels are placed at 0,1,2,...\n";
+	print "                  by obmitting label (P:), the positions are used\n";
+	print "                  prefix a specifies to add labels, r to replace (default is first replace than add)\n";
+	print "  -[xy]2?tics[ar]? S:I:E\n";
+	print "                  places labels beginning at position S with increment I up to E\n";
 	print "  -xlabel TXT     label for x-axis\n";
 	print "  -ylabel TXT     label for y-axis\n";
 	print "  -title TXT      plot title\n";
@@ -351,18 +353,27 @@ sub readfile {
 }
 
 sub readtics {
-	(my $name,my $tics)=@_;
-	my $gp="set ".$name." (";
+	(my $name,my $typ,my $tics)=@_;
+	$typ=$readtics_typ,$readtics_typ="a" if ""eq$typ;
+	my @gp=();
 	my $i=0;
-	foreach my $xtic (split /,/,$tics){
-		(my $pos,my $lab)=split /:/,$xtic,2;
-		if($xtic!~/:/){ $lab=$pos; $pos=$i; }
-		$gp.="'".$lab."' ".$pos.",";
-		$i++;
+	$name.=" add" if "a"eq$typ;
+	if($tics=~/^([0-9.]*):([0-9.]+):([0-9.]*)$/){
+		my $res=$2;
+		die "label-end set but start obmitted for $name" if ""eq$1 && ""ne$3;
+		$res=$1.",".$res if ""ne$1;
+		$res.=",".$3 if ""ne$3;
+		return "set ".$name." ".$res."\n";
+	}else{
+		foreach my $xtic (split /,/,$tics){
+			my @poslab=split /:/,$xtic,2;
+			if(@poslab<2){         push @gp,"'".$poslab[0]."' ".$i; }
+			elsif(""eq$poslab[1]){ push @gp,$poslab[0]; }
+			else{                  push @gp,"'".$poslab[1]."' ".$poslab[0]; }
+			$i++;
+		}
+		return "set ".$name." (".(join ",",@gp).")\n";
 	}
-	$gp=~s/,$//;
-	$gp.=")\n";
-	return $gp;
 }
 
 sub readlinestyles {
