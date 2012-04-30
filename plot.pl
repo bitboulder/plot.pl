@@ -23,9 +23,7 @@ my %outopts=(           "eps"=>"color",          "tex"=>"color");
 my $outtyp="x11";
 my $outbase="plot";
 
-my $gpcfg="";
-my $gpcfgnf="";
-my $gpcfgl="";
+my @gpcfg="";
 my $ptyp="lines";
 (my $nbg,my $blk,my $colxy,my $coln)=(0,0,0,1);
 my $size="";
@@ -122,34 +120,35 @@ if($outtyps{$outtyp}eq"plot"){
 &usage() if $maxnum<1;
 unshift @ARGV,"-nox" if $maxnum==1;
 
+my $r="(@(-1|X|[0-9]+))?";
 while(1){
-	if   ($ARGV[0]eq"-nbg"      ){ shift; $nbg    =1;       }
-	elsif($ARGV[0]eq"-blk"      ){ shift; $blk    =1;       }
-	elsif($ARGV[0]eq"-blke"     ){ shift; $blk    =2;       }
-	elsif($ARGV[0]eq"-blkw"     ){ shift; $blk=$blk?$blk:1; $gpcfg.="set boxwidth ".(shift)." absolute\n"; }
-	elsif($ARGV[0]eq"-typ"      ){ shift; $ptyp=shift;   &ptypinit(); }
-	elsif($ARGV[0]eq"-xy"       ){ shift; $colxy  =1;       }
-	elsif($ARGV[0]eq"-nox"      ){ shift; $colxy  =-1;      }
-	elsif($ARGV[0]eq"-col"      ){ shift; $coln   =shift;   }
-	elsif($ARGV[0]eq"-multiplot"){ shift; $multiplot=shift; }
-	elsif($ARGV[0]eq"-xrange"   ){ shift; $gpcfg .="set xrange [".(shift)."]\n"; }
-	elsif($ARGV[0]eq"-yrange"   ){ shift; $gpcfg .="set yrange [".(shift)."]\n"; }
-	elsif($ARGV[0]eq"-xgrid"    ){ shift; $gpcfg .="set grid xtics\n"; }
-	elsif($ARGV[0]eq"-ygrid"    ){ shift; $gpcfg .="set grid ytics\n"; }
-	elsif($ARGV[0]=~/^-([xy]2?tics)([ar]?)$/){ shift; $gpcfg .=&readtics($1,$2,shift); }
-	elsif($ARGV[0]eq"-xlabel"   ){ shift; $gpcfgl.="set xlabel \"".(shift)."\"\n"; }
-	elsif($ARGV[0]eq"-ylabel"   ){ shift; $gpcfg .="set ylabel \"".(shift)."\"\n"; }
-	elsif($ARGV[0]eq"-title"    ){ shift; $gpcfg .="set title \"".(shift)."\"\n"; $gpcfgnf.="unset title\n"; }
-	elsif($ARGV[0]eq"-size"     ){ shift; $size   =shift;   }
-	elsif($ARGV[0]eq"-xsize"    ){ shift; $outopt.=" size ".(shift);   }
-	elsif($ARGV[0]eq"-color"    ){ shift; $gpcfg .=&readlinestyles(shift,"lt 1 lc rgb \"#%s\""); }
-	elsif($ARGV[0]eq"-style"    ){ shift; $gpcfg .=&readlinestyles(shift); }
-	elsif($ARGV[0]eq"-log"      ){ shift; $gpcfg .="set logscale ".(shift)."\n"; }
-	elsif($ARGV[0]eq"-key"      ){ shift; $gpcfg .="set key ".(shift)."\n"; }
-	elsif($ARGV[0]eq"-outopt"   ){ shift; $outopt.=" ".(shift); }
-	elsif($ARGV[0]eq"-C"        ){ shift; $gpcfg .=(shift)."\n"; }
-	elsif($ARGV[0]eq"-c"        ){ shift; $gpcfg .=&readfile(shift); }
-	elsif($ARGV[0]eq"-cn"       ){ shift; push @cnames,(shift); }
+	if   ($ARGV[0]eq"-nbg"       ){ shift; $nbg    =1;       }
+	elsif($ARGV[0]eq"-blk"       ){ shift; $blk    =1;       }
+	elsif($ARGV[0]eq"-blke"      ){ shift; $blk    =2;       }
+	elsif($ARGV[0]eq"-blkw"      ){ shift; $blk=$blk?$blk:1; $gpcfg[0].="set boxwidth ".(shift)." absolute\n"; }
+	elsif($ARGV[0]eq"-typ"       ){ shift; $ptyp=shift;   &ptypinit(); }
+	elsif($ARGV[0]eq"-xy"        ){ shift; $colxy  =1;       }
+	elsif($ARGV[0]eq"-nox"       ){ shift; $colxy  =-1;      }
+	elsif($ARGV[0]eq"-col"       ){ shift; $coln   =shift;   }
+	elsif($ARGV[0]eq"-multiplot" ){ shift; $multiplot=shift; }
+	elsif($ARGV[0]=~/^-xrange$r$/){ shift; &gpcfg("set xrange [".(shift)."]\n",$2,0); }
+	elsif($ARGV[0]=~/^-yrange$r$/){ shift; &gpcfg("set yrange [".(shift)."]\n",$2,0); }
+	elsif($ARGV[0]=~/^-xgrid$r$/ ){ shift; &gpcfg("set grid xtics\n",$2,0); }
+	elsif($ARGV[0]=~/^-ygrid$r$/ ){ shift; &gpcfg("set grid ytics\n",$2,0); }
+	elsif($ARGV[0]=~/^-([xy]2?tics)([ar]?)$r$/){ shift; &gpcfg(&readtics($1,$2,shift),$4,0); }
+	elsif($ARGV[0]=~/^-xlabel$r$/){ shift; &gpcfg("set xlabel \"".(shift)."\"\n",$2,-1); }
+	elsif($ARGV[0]=~/^-ylabel$r$/){ shift; &gpcfg("set ylabel \"".(shift)."\"\n",$2,0);  }
+	elsif($ARGV[0]eq"-title"     ){ shift; $gpcfg[0].="set title \"".(shift)."\"\n"; $gpcfg[1].="unset title\n"; }
+	elsif($ARGV[0]eq"-size"      ){ shift; $size   =shift;   }
+	elsif($ARGV[0]eq"-xsize"     ){ shift; $outopt.=" size ".(shift);   }
+	elsif($ARGV[0]=~/^-color$r$/ ){ shift; &gpcfg(&readlinestyles(shift,"lt 1 lc rgb \"#%s\""),$2,0); }
+	elsif($ARGV[0]=~/^-style$r$/ ){ shift; &gpcfg(&readlinestyles(shift),$2,0); }
+	elsif($ARGV[0]=~/^-log$r$/   ){ shift; &gpcfg("set logscale ".(shift)."\n",$2,0); }
+	elsif($ARGV[0]=~/^-key$r$/   ){ shift; &gpcfg("set key ".(shift)."\n",$2,0); }
+	elsif($ARGV[0]eq"-outopt"    ){ shift; $outopt.=" ".(shift); }
+	elsif($ARGV[0]=~/^-C$r$/     ){ shift; &gpcfg((shift)."\n",$2,0); }
+	elsif($ARGV[0]=~/^-c$r$/     ){ shift; &gpcfg(&readfile(shift),$2,0); }
+	elsif($ARGV[0]eq"-cn"        ){ shift; push @cnames,(shift); }
 	# deprecated
 	elsif($ARGV[0]eq"-2"        ){ shift; $colxy  =1;       }
 	elsif($ARGV[0]eq"-3"        ){ shift; $coln   =2;       }
@@ -173,7 +172,7 @@ sub ptypinit {
 	}
 	if("imagevalue"eq$ptyp){
 		$ptyp="image";
-		$gpcfg.="unset colorbox\n";
+		$gpcfg[0].="unset colorbox\n";
 		my @val=sort {$a<=>$b} split /[ \n\r]+/,join "",@dat;
 		(my $min,my $max)=($val[0],$val[-1]);
 		for(my $y=0;$y<@dat;$y++){
@@ -181,10 +180,18 @@ sub ptypinit {
 			$line[-1]=~s/[\n\r]+$//;
 			for(my $x=0;$x<@line;$x++){
 				my $col=($line[$x]-$min)/($max-$min)<0.5 ? "white" : "black";
-				$gpcfg.="set label \"".$line[$x]."\" at ".$x.",".$y." center front textcolor rgbcolor \"".$col."\"\n";
+				$gpcfg[0].="set label \"".$line[$x]."\" at ".$x.",".$y." center front textcolor rgbcolor \"".$col."\"\n";
 			}
 		}
 	}
+}
+
+sub gpcfg {
+	(my $cfg,my $rep,my $def)=@_;
+	$def=$rep if ""ne$rep;
+	$def=1000 if $def<0;
+	if("X"eq$def){ for(my $i=0;$i<500;$i++){ $gpcfg[$i].=$cfg; } }
+	else{ $gpcfg[$def].=$cfg; }
 }
 
 $outopt=" ".$outopts{$outtyp} if ""eq$outopt;
@@ -211,26 +218,26 @@ sub usage {
 	print "  -nox            there is no x-column in data - use line number\n";
 	print "  -col N          use N data columns (for block width in -blk mode, or err-bar in -blke)\n";
 	print "  -multiplot N    use every N columns for a new subplot\n";
-	print "  -xrange MIN:MAX define x-axis range\n";
-	print "  -yrange MIN:MAX define y-axis range\n";
+	print "  -xrange MIN:MAX define x-axis range [@]\n";
+	print "  -yrange MIN:MAX define y-axis range [@]\n";
 	print "  -[xy]2?tics[ar]? P:L|L|P:,...\n";
-	print "                  places labels L at position P (\"0.5:hallo,0.8:welt\" or \"hallo,welt\")\n";
+	print "                  places labels L at position P (\"0.5:hallo,0.8:welt\" or \"hallo,welt\") [@]\n";
 	print "                  by obmitting position (L), the labels are placed at 0,1,2,...\n";
 	print "                  by obmitting label (P:), the positions are used\n";
 	print "                  prefix a specifies to add labels, r to replace (default is first replace than add)\n";
 	print "  -[xy]2?tics[ar]? S:I:E\n";
-	print "                  places labels beginning at position S with increment I up to E\n";
-	print "  -xlabel TXT     label for x-axis\n";
-	print "  -ylabel TXT     label for y-axis\n";
-	print "  -xgrid          x-axis grid\n";
-	print "  -ygrid          y-axis grid\n";
+	print "                  places labels beginning at position S with increment I up to E [@]\n";
+	print "  -xlabel TXT     label for x-axis [@]\n";
+	print "  -ylabel TXT     label for y-axis [@]\n";
+	print "  -xgrid          x-axis grid [@]\n";
+	print "  -ygrid          y-axis grid [@]\n";
 	print "  -size W,H       set drawing size for gnuplot\n";
 	print "  -xsize W,H      set output size of drawing in pixels (for eps use: Wcm,Hcm)\n";
-	print "  -color C,C,...  define colors (exa: ff0000,00ff000)\n";
+	print "  -color C,C,...  define colors (exa: ff0000,00ff000) [@]\n";
 	print "  -style T:V,V,...define line styles (exa: pt:1,2,3 / lw:2,2,1) - see gnuplot: set style line\n";
-	print "                  for -style and -color the options can be continued by anothers\n";
-	print "  -log AXIS       enable logscale (AXIS: x|y|xy)\n";
-	print "  -key ARG        modifiy the key (example: -key off)\n";
+	print "                  for -style and -color the options can be continued by anothers [@]\n";
+	print "  -log AXIS       enable logscale (AXIS: x|y|xy) [@]\n";
+	print "  -key ARG        modifiy the key (example: -key off) [@]\n";
 	print "  -cn TITLE       add column title\n";
 	print "  -title TXT      plot title\n";
 	print "  -in INPUTFILE   read data form file instead of stdin\n";
@@ -244,12 +251,14 @@ sub usage {
 	print "                  dem is a special output type which uses the previous configured one but outputs a dem- and a dat-file for gnuplot\n";
 	print "  -outopt OPT     output options (example for eps/tex: color, monochrome - see gnuplot terminal typ if supported\n";
 	print "  -dem            the dem-file is only build of every outcommented line in infile and the output options\n";
-	print "  -c GPCFG        include file GPCFG in gnuplot script\n";
-	print "  -C GPCMD        include command GPCMD in gnuplot script\n";
+	print "  -c GPCFG        include file GPCFG in gnuplot script [@]\n";
+	print "  -C GPCMD        include command GPCMD in gnuplot script [@]\n";
 	print "All options can also be included in the input file (except -h,-in,-out,-dem).\n";
-	print "The options sections start with '#' and will be splitted at spaces into single options.\n";
-	print "If there is a line starting with '#-' and no occurance of ' -' it is only splitted at the first space.\n";
-	print "To use spaces within the options or arguments you need to use '__'\n";
+	print "  The options sections start with '#' and will be splitted at spaces into single options.\n";
+	print "  If there is a line starting with '#-' and no occurance of ' -' it is only splitted at the first space.\n";
+	print "  To use spaces within the options or arguments you need to use '__'\n";
+	print "All options marked with [@] can be suffixed by \@N where N is the number of the mulitplot to use is value.\n";
+	print "  For example you can use '-ylabel@3 XX'. A number of -1 stands for the last plot. If the number is 'X', all plots are related.\n";
 	exit 0;
 }
 
@@ -261,7 +270,7 @@ if($blk){
 	$dem.="set style fill solid 0.2\n" if $blk==2;
 }
 my $matrix = $ptyp=~/^(image)$/;
-$dem.=$gpcfg;
+$dem.=$gpcfg[0];
 my $demout="set term ".$outtyps{$outtyp}.$outopt."\n";
 $demout.="set encoding utf8\n";
 $demout.="set output \"".$outbase.".".$outtyp."\n" if "x11"ne$outtyp;
@@ -276,17 +285,16 @@ if($nplot>1){
   $dem.="set lmargin 10\n";
   $dem.=sprintf "set size 1,%.5f\n",0.9/$nplot;
   $dem.="set tmargin 0\n";
-  $gpcfgl.="set format x\n";
-  $gpcfgl.="set bmargin\n";
-  $gpcfgl.=sprintf "set size 1,%.5f\n",0.9/$nplot+0.02;
+  &gpcfg("set format x\n","",-1);
+  &gpcfg("set bmargin\n","",-1);
+  &gpcfg((sprintf "set size 1,%.5f\n",0.9/$nplot+0.05),"",-1);
 }
 my $ncol = $colxy+$coln; # number of colums per line
 my $col  = $colxy ? 0 : 1; # first column
 while($col<$maxnum){
-  $dem.= $gpcfgi[$iplot];
-  $dem.= $gpcfgnf if $iplot==1;
-  $dem.= $gpcfgl if ++$iplot==$nplot;
-  $dem.= sprintf "set origin 0,%.5f\n",0.95-0.9*$iplot/$nplot-($iplot==$nplot?0.02:0) if $nplot>1;
+  $dem.= $gpcfg[$iplot] if $iplot;
+  $dem.= $gpcfg[1000] if ++$iplot==$nplot;
+  $dem.= sprintf "set origin 0,%.5f\n",0.95-0.9*$iplot/$nplot-($iplot==$nplot?0.05:0) if $nplot>1;
   $dem.="plot";
   my $ls   = 1;
   my $scol = 0;
