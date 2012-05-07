@@ -166,9 +166,6 @@ foreach(@dat){
 close TMP;
 
 sub ptypinit {
-	if("image"eq$ptyp){
-		$coln=0;
-	}
 	if("imagevalue"eq$ptyp){
 		$ptyp="image";
 		$gpcfg[0].="unset colorbox\n";
@@ -183,6 +180,7 @@ sub ptypinit {
 			}
 		}
 	}
+	$coln=0 if "image"eq$ptyp;
 }
 
 sub gpcfg {
