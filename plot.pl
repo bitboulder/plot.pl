@@ -136,8 +136,7 @@ while(1){
 	elsif($ARGV[0]=~/^-xgrid$r$/ ){ shift; &gpcfg("set grid xtics\n",$2,0); }
 	elsif($ARGV[0]=~/^-ygrid$r$/ ){ shift; &gpcfg("set grid ytics\n",$2,0); }
 	elsif($ARGV[0]=~/^-([xy]2?tics)([ar]?)$r$/){ shift; &gpcfg(&readtics($1,$2,shift),$4,0); }
-	elsif($ARGV[0]=~/^-xlabel$r$/){ shift; &gpcfg("set xlabel \"".(shift)."\"\n",$2,-1); }
-	elsif($ARGV[0]=~/^-ylabel$r$/){ shift; &gpcfg("set ylabel \"".(shift)."\"\n",$2,0);  }
+	elsif($ARGV[0]=~/^-([xy]2?label)$r$/){ shift; &gpcfg("set ".$1." \"".(shift)."\"\n",$3,-1); }
 	elsif($ARGV[0]eq"-title"     ){ shift; $gpcfg[0].="set title \"".(shift)."\"\n"; $gpcfg[1].="unset title\n"; }
 	elsif($ARGV[0]eq"-size"      ){ shift; $size   =shift;   }
 	elsif($ARGV[0]eq"-xsize"     ){ shift; $outopt.=" size ".(shift);   }
@@ -227,8 +226,7 @@ sub usage {
 	print "                  prefix a specifies to add labels, r to replace (default is first replace than add)\n";
 	print "  -[xy]2?tics[ar]? S:I:E\n";
 	print "                  places labels beginning at position S with increment I up to E [@]\n";
-	print "  -xlabel TXT     label for x-axis [@]\n";
-	print "  -ylabel TXT     label for y-axis [@]\n";
+	print "  -[xy]2?label TXT label for x/y/x2/y2-axis [@]\n";
 	print "  -xgrid          x-axis grid [@]\n";
 	print "  -ygrid          y-axis grid [@]\n";
 	print "  -size W,H       set drawing size for gnuplot\n";
