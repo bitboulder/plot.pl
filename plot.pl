@@ -31,7 +31,7 @@ my $outopt="";
 my $multiplot=-1;
 my $infile="";
 my $demfix=undef;
-my $readtics_typ="r";
+my %readtics_typ=();
 my @cnames=();
 my %stylecnt=();
 
@@ -365,7 +365,8 @@ sub readfile {
 
 sub readtics {
 	(my $name,my $typ,my $tics)=@_;
-	$typ=$readtics_typ,$readtics_typ="a" if ""eq$typ;
+	$typ=$readtics_typ{$name},$readtics_typ{$name}="a" if ""eq$typ;
+	$typ="r" if ""eq$typ;
 	my @gp=();
 	my $i=0;
 	$name.=" add" if "a"eq$typ;
