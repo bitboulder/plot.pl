@@ -370,7 +370,7 @@ sub readtics {
 	my @gp=();
 	my $i=0;
 	$name.=" add" if "a"eq$typ;
-	if($tics=~/^([0-9.]*):([0-9.]+):([0-9.]*)$/){
+	if($tics=~/^(-?[0-9.]*):([0-9.]+):(-?[0-9.]*)$/){
 		my $res=$2;
 		die "label-end set but start obmitted for $name" if ""eq$1 && ""ne$3;
 		$res=$1.",".$res if ""ne$1;
