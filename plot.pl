@@ -23,7 +23,8 @@ my %outopts=(           "eps"=>"color",          "tex"=>"color");
 my $outtyp="x11";
 my $outbase="plot";
 
-my @gpcfg="";
+my @gpcfg=();
+my @plt=();
 my $ptyp="lines";
 (my $nbg,my $blk,my $colxy,my $coln)=(0,0,0,1);
 my $size="";
@@ -145,6 +146,7 @@ while(1){
 	elsif($ARGV[0]=~/^-log$r$/   ){ shift; &gpcfg("set logscale ".(shift)."\n",$2,0); }
 	elsif($ARGV[0]=~/^-key$r$/   ){ shift; &gpcfg("set key ".(shift)."\n",$2,0); }
 	elsif($ARGV[0]eq"-outopt"    ){ shift; $outopt.=" ".(shift); }
+	elsif($ARGV[0]=~/^-plt$r$/   ){ shift; &gpcfg((shift)."%%",$2,"X",\@plt); }
 	elsif($ARGV[0]=~/^-C$r$/     ){ shift; &gpcfg((shift)."\n",$2,0); }
 	elsif($ARGV[0]=~/^-c$r$/     ){ shift; &gpcfg(&readfile(shift),$2,0); }
 	elsif($ARGV[0]eq"-cn"        ){ shift; push @cnames,(shift); }
@@ -185,10 +187,11 @@ sub ptypinit {
 
 sub gpcfg {
 	(my $cfg,my $rep,my $def)=@_;
+	my $dst=@_>3 ? @_[3] : \@gpcfg;
 	$def=$rep if ""ne$rep;
 	$def=1000 if $def<0;
-	if("X"eq$def){ for(my $i=0;$i<500;$i++){ $gpcfg[$i].=$cfg; } }
-	else{ $gpcfg[$def].=$cfg; }
+	if("X"eq$def){ for(my $i=0;$i<500;$i++){ $dst->[$i].=$cfg; } }
+	else{ $dst->[$def].=$cfg; }
 }
 
 $outopt=" ".$outopts{$outtyp} if ""eq$outopt;
@@ -249,12 +252,13 @@ sub usage {
 	print "  -dem            the dem-file is only build of every outcommented line in infile and the output options\n";
 	print "  -c GPCFG        include file GPCFG in gnuplot script [@]\n";
 	print "  -C GPCMD        include command GPCMD in gnuplot script [@]\n";
+	print "  -plt PLTCMD     override plot command in gnuplot script [@]\n";
 	print "All options can also be included in the input file (except -h,-in,-out,-dem).\n";
 	print "  The options sections start with '#' and will be splitted at spaces into single options.\n";
 	print "  If there is a line starting with '#-' and no occurance of ' -' it is only splitted at the first space.\n";
 	print "  To use spaces within the options or arguments you need to use '__'\n";
 	print "All options marked with [@] can be suffixed by \@N where N is the number of the mulitplot to use is value.\n";
-	print "  For example you can use '-ylabel@3 XX'. A number of -1 stands for the last plot. If the number is 'X', all plots are related.\n";
+	print "  For example you can use '-ylabel\@3 XX'. A number of -1 stands for the last plot. If the number is 'X', all plots are related.\n";
 	exit 0;
 }
 
@@ -292,6 +296,14 @@ while($col<$maxnum){
   $dem.= $gpcfg[1000] if ++$iplot==$nplot;
   $dem.= sprintf "set origin 0,%.5f\n",0.95-0.9*$iplot/$nplot-($iplot==$nplot?0.05:0) if $nplot>1;
   $dem.="plot";
+  if($plt[$iplot]ne""){
+	my @p=split /%%/,$plt[$iplot];
+	map { $_="\"".$tmpdat."\" ".$_; } @p;
+	$dem.=join ", ",@p;
+	$dem.="\n";
+	$col+=$multiplot;
+	next;
+  }
   my $ls   = 1;
   my $scol = 0;
   while($col<$maxnum && $scol<$multiplot){
