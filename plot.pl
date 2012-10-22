@@ -96,7 +96,7 @@ while(<STDIN>){
 	$_=~s/ +$//g;
 	next if ""eq$_;
 	push @dat,$_;
-	my $num=split / +/,$_;
+	my $num=split /[\t ]+/,$_;
 	$maxnum=$num if $maxnum<$num;
 }
 close STDIN if ""ne$infile;
@@ -195,6 +195,8 @@ sub gpcfg {
 }
 
 $outopt=" ".$outopts{$outtyp} if ""eq$outopt;
+$outopt=$1.($2*50).",".($3*50).$4 if "x11"eq$outtyp && $outopt=~/^(.*size *)([0-9.]+)cm,([0-9.]+)cm(.*)$/;
+
 $maxnum++ if $colxy<0;
 $coln=$maxnum if !$coln;
 $nbg=1 if "x11"ne$outtyp;
