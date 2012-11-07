@@ -330,7 +330,7 @@ if(defined $demfix){
 	$demfix=~s/%DAT%/$tmpdat/g;
 	$dem=$demfix;
 }
-$dem.="pause mouse ".("wxt"eq$outtyps{$outtyp}?"button2":"")."\n";
+$dem.="pause mouse ".($outtyps{$outtyp}=~/^(wxt|qt)$/?"button2":"")."\n";
 open GP,">".$tmpdem;
 print GP $dem;
 close GP;
