@@ -310,12 +310,13 @@ while($col<$maxnum){
   my $scol = 0;
   while($col<$maxnum && $scol<$multiplot){
   	my $title = shift @cnames;
+	$title="" if "_"eq$title;
   	my $using = ($colxy ? ++$col : 1);
     for(my $i=0;$i<$coln;$i++){ $using.=":".(++$col); }
   	$dem.=" \"".$tmpdat."\"";
 	$dem.=" matrix" if $matrix;
 	$dem.=" using ".$using if !$matrix;
-  	$dem.=" title \"".$title."\"" if $title ne "";
+  	$dem.=" title \"".$title."\"";
   	$dem.=" with ".$ptyp;
   	$dem.=" ls ".($ls++) if !$matrix;
   	$dem.=",";
