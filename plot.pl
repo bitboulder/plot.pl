@@ -143,7 +143,7 @@ while(1){
 	elsif($ARGV[0]eq"-xsize"     ){ shift; $outopt.=" size ".(shift);   }
 	elsif($ARGV[0]=~/^-color$r$/ ){ shift; &gpcfg(&readlinestyles(shift,"lt 1 lc rgb \"#%s\""),$2,0); }
 	elsif($ARGV[0]=~/^-style$r$/ ){ shift; &gpcfg(&readlinestyles(shift),$2,0); }
-	elsif($ARGV[0]=~/^-([xyz]2?)log$r$/){ shift; &gpcfg("set logscale ".$1."\n",$3,0); }
+	elsif($ARGV[0]=~/^-([xyz]+2?)log$r$/){ shift; &gpcfg("set logscale ".$1."\n",$3,0); }
 	elsif($ARGV[0]=~/^-key$r$/   ){ shift; &gpcfg("set key ".(shift)."\n",$2,0); }
 	elsif($ARGV[0]eq"-outopt"    ){ shift; $outopt.=" ".(shift); }
 	elsif($ARGV[0]=~/^-plt$r$/   ){ shift; &gpcfg((shift)."%%",$2,"X",\@plt); }
@@ -238,7 +238,7 @@ sub usage {
 	print "  -color C,C,...  define colors (exa: ff0000,00ff000) [@]\n";
 	print "  -style T:V,V,...define line styles (exa: pt:1,2,3 / lw:2,2,1) - see gnuplot: set style line\n";
 	print "                  for -style and -color the options can be continued by anothers [@]\n";
-	print "  -[xyz]2?log     enable logscale [@]\n";
+	print "  -[xyz]+2?log     enable logscale [@]\n";
 	print "  -key ARG        modifiy the key (example: -key off) [@]\n";
 	print "  -cn TITLE       add column title\n";
 	print "  -title TXT      plot title\n";
