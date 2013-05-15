@@ -298,7 +298,7 @@ if($nplot>1){
 	$dem.="set bmargin 0\n";
 	$dem.="set lmargin 10\n";
 	$dem.=sprintf "set size 1,%.5f\n",$rat;
-  	$dem.="set tmargin 0\n";
+  	&gpcfg("set tmargin 0\n","",1);
   	&gpcfg("set format x\n","",-1);
 	&gpcfg("set bmargin\n","",-1);
 	&gpcfg((sprintf "set size 1,%.5f\n",$rat+$ratr),"",-1);
