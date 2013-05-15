@@ -30,6 +30,8 @@ my $ptyp="lines";
 my $size="";
 my $outopt="";
 my $multiplot=-1;
+my $xmultiplot="";
+my $multiplotr=0.1;
 my $infile="";
 my $demfix=undef;
 my %readtics_typ=();
@@ -131,11 +133,9 @@ while(1){
 	elsif($ARGV[0]eq"-xy"        ){ shift; $colxy  =1;       }
 	elsif($ARGV[0]eq"-nox"       ){ shift; $colxy  =-1;      }
 	elsif($ARGV[0]eq"-col"       ){ shift; $coln   =shift;   }
-	elsif($ARGV[0]eq"-multiplot" ){ shift; $multiplot=shift; }
-	elsif($ARGV[0]=~/^-xrange$r$/){ shift; &gpcfg("set xrange [".(shift)."]\n",$2,0); }
-	elsif($ARGV[0]=~/^-yrange$r$/){ shift; &gpcfg("set yrange [".(shift)."]\n",$2,0); }
-	elsif($ARGV[0]=~/^-xgrid$r$/ ){ shift; &gpcfg("set grid xtics\n",$2,0); }
-	elsif($ARGV[0]=~/^-ygrid$r$/ ){ shift; &gpcfg("set grid ytics\n",$2,0); }
+	elsif($ARGV[0]=~/^-(x?)multiplot([0-9.]+)?$/ ){ shift; $multiplot=shift; $xmultiplot="x"eq$1; $multiplotr=$2 if ""ne$2; }
+	elsif($ARGV[0]=~/^-([xy])range$r$/){ shift; &gpcfg("set $1range [".(shift)."]\n",$3,0); }
+	elsif($ARGV[0]=~/^-([xy])grid$r$/ ){ shift; &gpcfg("set grid $1tics\n",$3,0); }
 	elsif($ARGV[0]=~/^-([xy]2?tics)([ar]?)$r$/){ shift; &gpcfg(&readtics($1,$2,shift),$4,0); }
 	elsif($ARGV[0]=~/^-([xy]2?label)$r$/){ shift; &gpcfg("set ".$1." \"".(shift)."\"\n",$3,-1); }
 	elsif($ARGV[0]eq"-title"     ){ shift; $gpcfg[0].="set title \"".(shift)."\"\n"; $gpcfg[1].="unset title\n"; }
@@ -207,55 +207,54 @@ $colxy=0 if $colxy<0;
 
 sub usage {
 	print "Usage: $0 {Options} {COLNAME}\n";
-	print "  -typ TYP        plotting type:\n";
-	print "       lines (def.) use lines\n";
-	print "       boxes        use boxes (for histogram,recognition result,...)\n";
-	print "       image        use image (for sonagram,confusion matrix,...)\n";
-	print "       imagevalue   use image with values textual labels\n";
+	print "  -typ TYP           plotting type:\n";
+	print "       lines (def.)   use lines\n";
+	print "       boxes          use boxes (for histogram,recognition result,...)\n";
+	print "       image          use image (for sonagram,confusion matrix,...)\n";
+	print "       imagevalue     use image with values textual labels\n";
 	print "       any other gnuplot plotting style (points,dots,linespoints,...)\n";
-	print "  -nbg            no background mode (donot detach from terminal)\n";
-	print "  -blk            use blocks instead of lines\n";
-	print "  -blke           use blocks with error bars\n";
-	print "  -blkw NUM       set absolute block width (implies -blk)\n";
-	print "  -xy             use two colums of data (x,y-values) - normaly x-values are read from the first column\n";
-	print "  -nox            there is no x-column in data - use line number\n";
-	print "  -col N          use N data columns (for block width in -blk mode, or err-bar in -blke)\n";
-	print "  -multiplot N    use every N columns for a new subplot\n";
-	print "  -xrange MIN:MAX define x-axis range [@]\n";
-	print "  -yrange MIN:MAX define y-axis range [@]\n";
+	print "  -nbg               no background mode (donot detach from terminal)\n";
+	print "  -blk               use blocks instead of lines\n";
+	print "  -blke              use blocks with error bars\n";
+	print "  -blkw NUM          set absolute block width (implies -blk)\n";
+	print "  -xy                use two colums of data (x,y-values) - normaly x-values are read from the first column\n";
+	print "  -nox               there is no x-column in data - use line number\n";
+	print "  -col N             use N data columns (for block width in -blk mode, or err-bar in -blke)\n";
+	print "  -x?multiplotR? N   use every N columns for a new subplot in x or y (default) direction\n";
+	print "                     R is an optional amount of space to use for the common axis (default: 0.1)\n";
+	print "  -[xy]range MIN:MAX define [xy]-axis range [@]\n";
 	print "  -[xy]2?tics[ar]? P:L|L|P:,...\n";
-	print "                  places labels L at position P (\"0.5:hallo,0.8:welt\" or \"hallo,welt\") [@]\n";
-	print "                  by obmitting position (L), the labels are placed at 0,1,2,...\n";
-	print "                  by obmitting label (P:), the positions are used\n";
-	print "                  prefix a specifies to add labels, r to replace (default is first replace than add)\n";
+	print "                     places labels L at position P (\"0.5:hallo,0.8:welt\" or \"hallo,welt\") [@]\n";
+	print "                     by obmitting position (L), the labels are placed at 0,1,2,...\n";
+	print "                     by obmitting label (P:), the positions are used\n";
+	print "                     prefix a specifies to add labels, r to replace (default is first replace than add)\n";
 	print "  -[xy]2?tics[ar]? S:I:E\n";
-	print "                  places labels beginning at position S with increment I up to E [@]\n";
+	print "                     places labels beginning at position S with increment I up to E [@]\n";
 	print "  -[xy]2?label TXT label for x/y/x2/y2-axis [@]\n";
-	print "  -xgrid          x-axis grid [@]\n";
-	print "  -ygrid          y-axis grid [@]\n";
-	print "  -size W,H       set drawing size for gnuplot\n";
-	print "  -xsize W,H      set output size of drawing in pixels (for eps use: Wcm,Hcm)\n";
-	print "  -color C,C,...  define colors (exa: ff0000,00ff000) [@]\n";
-	print "  -style T:V,V,...define line styles (exa: pt:1,2,3 / lw:2,2,1) - see gnuplot: set style line\n";
-	print "                  for -style and -color the options can be continued by anothers [@]\n";
-	print "  -[xyz]+2?log     enable logscale [@]\n";
-	print "  -key ARG        modifiy the key (example: -key off) [@]\n";
-	print "  -cn TITLE       add column title\n";
-	print "  -title TXT      plot title\n";
-	print "  -in INPUTFILE   read data form file instead of stdin\n";
-	print "                  If the file is a dn3- or xml-file data file be converted by dlabpro.\n";
-	print "                  You can specify the file as:\n";
-	print "                   INPUTFILE              file should be of typ data\n";
-	print "                   INPUTFILE::FIELD       file should be of typ object and contain a data instance named FIELD\n";
-	print "                   INPUTFILE:TYP:FIELD    file should be of typ TYP and contain a data instance named FIELD\n";
-	print "                   INPUTFILE:::CODE       execute CODE on restored data instance (is named 'x')\n";
-	print "  -out OUTFILE    define name of generated output file (extension specifies output type - eps|png|jpg|plot / only type is also possible)\n";
-	print "                  dem is a special output type which uses the previous configured one but outputs a dem- and a dat-file for gnuplot\n";
-	print "  -outopt OPT     output options (example for eps/tex: color, monochrome - see gnuplot terminal typ if supported\n";
-	print "  -dem            the dem-file is only build of every outcommented line in infile and the output options\n";
-	print "  -c GPCFG        include file GPCFG in gnuplot script [@]\n";
-	print "  -C GPCMD        include command GPCMD in gnuplot script [@]\n";
-	print "  -plt PLTCMD     override plot command in gnuplot script [@]\n";
+	print "  -[xy]grid          [xy]-axis grid [@]\n";
+	print "  -size W,H          set drawing size for gnuplot\n";
+	print "  -xsize W,H         set output size of drawing in pixels (for eps use: Wcm,Hcm)\n";
+	print "  -color C,C,...     define colors (exa: ff0000,00ff000) [@]\n";
+	print "  -style T:V,V,...   define line styles (exa: pt:1,2,3 / lw:2,2,1) - see gnuplot: set style line\n";
+	print "                     for -style and -color the options can be continued by anothers [@]\n";
+	print "  -[xyz]+2?log       enable logscale [@]\n";
+	print "  -key ARG           modifiy the key (example: -key off) [@]\n";
+	print "  -cn TITLE          add column title\n";
+	print "  -title TXT         plot title\n";
+	print "  -in INPUTFILE      read data form file instead of stdin\n";
+	print "                     If the file is a dn3- or xml-file data file be converted by dlabpro.\n";
+	print "                     You can specify the file as:\n";
+	print "                      INPUTFILE              file should be of typ data\n";
+	print "                      INPUTFILE::FIELD       file should be of typ object and contain a data instance named FIELD\n";
+	print "                      INPUTFILE:TYP:FIELD    file should be of typ TYP and contain a data instance named FIELD\n";
+	print "                      INPUTFILE:::CODE       execute CODE on restored data instance (is named 'x')\n";
+	print "  -out OUTFILE       define name of generated output file (extension specifies output type - eps|png|jpg|plot / only type is also possible)\n";
+	print "                     dem is a special output type which uses the previous configured one but outputs a dem- and a dat-file for gnuplot\n";
+	print "  -outopt OPT        output options (example for eps/tex: color, monochrome - see gnuplot terminal typ if supported\n";
+	print "  -dem               the dem-file is only build of every outcommented line in infile and the output options\n";
+	print "  -c GPCFG           include file GPCFG in gnuplot script [@]\n";
+	print "  -C GPCMD           include command GPCMD in gnuplot script [@]\n";
+	print "  -plt PLTCMD        override plot command in gnuplot script [@]\n";
 	print "All options can also be included in the input file (except -h,-in,-out,-dem).\n";
 	print "  The options sections start with '#' and will be splitted at spaces into single options.\n";
 	print "  If there is a line starting with '#-' and no occurance of ' -' it is only splitted at the first space.\n";
@@ -273,7 +272,7 @@ if($blk){
 	$dem.="set style fill solid 0.2\n" if $blk==2;
 }
 my $matrix = $ptyp=~/^(image)$/;
-$dem.=$gpcfg[0];
+$dem.=$gpcfg[0]; $gpcfg[0]="";
 my $demout="set term ".$outtyps{$outtyp}.$outopt."\n";
 $demout.="set encoding utf8\n";
 $demout.="set output \"".$outbase.".".$outtyp."\n" if "x11"ne$outtyp;
@@ -283,21 +282,35 @@ my $iplot=0;
 my @gpcfgi=();
 if($nplot>1){
   $dem.="set multiplot\n";
-  $dem.="set format x \"\"\n";
-  $dem.="set bmargin 0\n";
-  $dem.="set lmargin 10\n";
-  $dem.=sprintf "set size 1,%.5f\n",0.9/$nplot;
-  $dem.="set tmargin 0\n";
-  &gpcfg("set format x\n","",-1);
-  &gpcfg("set bmargin\n","",-1);
-  &gpcfg((sprintf "set size 1,%.5f\n",0.9/$nplot+0.05),"",-1);
+  my $rat=(1-$multiplotr)/$nplot;
+  my $ratr=$multiplotr*0.9;
+  if($xmultiplot){
+	$dem.="set rmargin 0\n";
+	$dem.="set bmargin 3\n";
+	$dem.=sprintf "set size %.5f,1\n",$rat+$ratr;
+	&gpcfg("set lmargin 0\n","",1);
+  	&gpcfg("set format y \"\"\n","",1);
+	&gpcfg("set ylabel \"\"\n","",1);
+	&gpcfg((sprintf "set size %.5f,1\n",$rat),"",1);
+  	for(my $i=0;$i<$nplot;$i++){ &gpcfg((sprintf "set origin %.5f,0\n",$i*$rat+($i?$ratr:0)),"",$i); }
+  }else{
+	$dem.="set format x \"\"\n";
+	$dem.="set bmargin 0\n";
+	$dem.="set lmargin 10\n";
+	$dem.=sprintf "set size 1,%.5f\n",$rat;
+  	$dem.="set tmargin 0\n";
+  	&gpcfg("set format x\n","",-1);
+	&gpcfg("set bmargin\n","",-1);
+	&gpcfg((sprintf "set size 1,%.5f\n",$rat+$ratr),"",-1);
+  	for(my $i=1;$i<=$nplot;$i++){ &gpcfg((sprintf "set origin 0,%.5f\n",0.95-$i*$rat-($i==$nplot?$ratr:0)),"",$i-1); }
+  }
 }
+$dem.=$gpcfg[0];
 my $ncol = $colxy+$coln; # number of colums per line
 my $col  = $colxy ? 0 : 1; # first column
 while($col<$maxnum){
   $dem.= $gpcfg[$iplot] if $iplot;
   $dem.= $gpcfg[1000] if ++$iplot==$nplot;
-  $dem.= sprintf "set origin 0,%.5f\n",0.95-0.9*$iplot/$nplot-($iplot==$nplot?0.05:0) if $nplot>1;
   $dem.="plot";
   if($plt[$iplot]ne""){
 	my @p=split /%%/,$plt[$iplot];
