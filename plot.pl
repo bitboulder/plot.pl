@@ -188,11 +188,17 @@ sub ptypinit {
 
 sub gpcfg {
 	(my $cfg,my $rep,my $def)=@_;
+	$def-=($def<0?-1000:1000) if my $begin=abs($def>=1000);
 	my $dst=@_>3 ? @_[3] : \@gpcfg;
 	$def=$rep if ""ne$rep;
 	$def=1000 if $def<0;
-	if("X"eq$def){ for(my $i=0;$i<500;$i++){ $dst->[$i].=$cfg; } }
-	else{ $dst->[$def].=$cfg; }
+	if("X"eq$def){
+		for(my $i=0;$i<500;$i++){
+			if($begin){ $dst->[$i].=$cfg; }else{ $dst->[$i]=$cfg.$dst->[$i]; }
+		}
+	}else{
+		if($begin){ $dst->[$def].=$cfg; }else{ $dst->[$def]=$cfg.$dst->[$def]; }
+	}
 }
 
 $outopt=" ".$outopts{$outtyp} if ""eq$outopt;
@@ -288,9 +294,9 @@ if($nplot>1){
 	$dem.="set rmargin 0\n";
 	$dem.="set bmargin 3\n";
 	$dem.=sprintf "set size %.5f,1\n",$rat+$ratr;
-	&gpcfg("set lmargin 0\n","",1);
-  	&gpcfg("set format y \"\"\n","",1);
-	&gpcfg("set ylabel \"\"\n","",1);
+	&gpcfg("set lmargin 0\n","",1001);
+  	&gpcfg("set format y \"\"\n","",1001);
+	&gpcfg("set ylabel \"\"\n","",1001);
 	&gpcfg((sprintf "set size %.5f,1\n",$rat),"",1);
   	for(my $i=0;$i<$nplot;$i++){ &gpcfg((sprintf "set origin %.5f,0\n",$i*$rat+($i?$ratr:0)),"",$i); }
   }else{
@@ -298,9 +304,9 @@ if($nplot>1){
 	$dem.="set bmargin 0\n";
 	$dem.="set lmargin 10\n";
 	$dem.=sprintf "set size 1,%.5f\n",$rat;
-  	&gpcfg("set tmargin 0\n","",1);
-  	&gpcfg("set format x\n","",-1);
-	&gpcfg("set bmargin\n","",-1);
+  	&gpcfg("set tmargin 0\n","",1001);
+  	&gpcfg("set format x\n","",-1001);
+	&gpcfg("set bmargin\n","",-1001);
 	&gpcfg((sprintf "set size 1,%.5f\n",$rat+$ratr),"",-1);
   	for(my $i=1;$i<=$nplot;$i++){ &gpcfg((sprintf "set origin 0,%.5f\n",0.95-$i*$rat-($i==$nplot?$ratr:0)),"",$i-1); }
   }
