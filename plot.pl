@@ -80,24 +80,23 @@ $outtyps{$outtyp}="x11" if ""eq$outtyps{$outtyp};
 my @dat=();
 my $i=0;
 while(<STDIN>){
-	$_=~s/##.*//;
+	$_=~s/[\n\r]+$//g;
+	$_=~s/#[#!].*//;
 	if($_=~/^([^#]*)#(.*)$/){
 		$_=$1;
 		my $arg=$2;
-		if("!"ne substr $arg,0,1){
-			if(defined $demfix){ $demfix.=$arg."\n"; }else{
-				my @arg = $arg=~/^-/ && $arg!~/ -/ ? (split / +/,$arg,2) : (split / +/,$arg);
-				foreach(@arg){
-					$_=~s/__/ /g;
-					push @ARGV,$_;
-				}
+		if(defined $demfix){ $demfix.=$arg."\n"; }else{
+			my @arg = $arg=~/^-/ && $arg!~/ -/ ? (split / +/,$arg,2) : (split / +/,$arg);
+			foreach(@arg){
+				$_=~s/__/ /g;
+				push @ARGV,$_;
 			}
 		}
 	}
 	$_=~s/^ +//g;
 	$_=~s/ +$//g;
 	next if ""eq$_;
-	push @dat,$_;
+	push @dat,$_."\n";
 	my $num=split /[\t ]+/,$_;
 	$maxnum=$num if $maxnum<$num;
 }
