@@ -187,16 +187,16 @@ sub ptypinit {
 
 sub gpcfg {
 	(my $cfg,my $rep,my $def)=@_;
-	$def-=($def<0?-1000:1000) if my $begin=abs($def>=1000);
+	$def-=($def<0?-1000:1000) if my $begin="X"ne$def && abs($def)>=1000;
 	my $dst=@_>3 ? @_[3] : \@gpcfg;
 	$def=$rep if ""ne$rep;
 	$def=1000 if $def<0;
 	if("X"eq$def){
 		for(my $i=0;$i<500;$i++){
-			if($begin){ $dst->[$i].=$cfg; }else{ $dst->[$i]=$cfg.$dst->[$i]; }
+			if($begin){ $dst->[$i]=$cfg.$dst->[$i]; }else{ $dst->[$i].=$cfg; }
 		}
 	}else{
-		if($begin){ $dst->[$def].=$cfg; }else{ $dst->[$def]=$cfg.$dst->[$def]; }
+		if($begin){ $dst->[$def]=$cfg.$dst->[$def]; }else{ $dst->[$def].=$cfg; }
 	}
 }
 
