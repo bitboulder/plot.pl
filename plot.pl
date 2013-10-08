@@ -233,6 +233,7 @@ sub usage {
 	print "                     by obmitting position (L), the labels are placed at 0,1,2,...\n";
 	print "                     by obmitting label (P:), the positions are used\n";
 	print "                     prefix a specifies to add labels, r to replace (default is first replace than add)\n";
+	print "                     to put a \",\" in the label you can use \";;\"\n";
 	print "  -[xy]2?tics[ar]? S:I:E\n";
 	print "                     places labels beginning at position S with increment I up to E [@]\n";
 	print "  -[xy]2?label TXT label for x/y/x2/y2-axis [@]\n";
@@ -418,6 +419,7 @@ sub readtics {
 			else{                  push @gp,"'".$poslab[1]."' ".$poslab[0]; }
 			$i++;
 		}
+		map {$_=~s/;;/,/g} @gp;
 		return "set ".$name." (".(join ",",@gp).")\n";
 	}
 }
