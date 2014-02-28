@@ -183,6 +183,7 @@ sub ptypinit {
 		}
 	}
 	$coln=0 if "image"eq$ptyp;
+#	$ptyp.=" failsafe" if "image"eq$ptyp;
 }
 
 sub gpcfg {
@@ -241,8 +242,9 @@ sub usage {
 	print "  -size W,H          set drawing size for gnuplot\n";
 	print "  -xsize W,H         set output size of drawing in pixels (for eps use: Wcm,Hcm)\n";
 	print "  -color C,C,...     define colors (exa: ff0000,00ff000) [@]\n";
-	print "  -style T:V,V,...   define line styles (exa: pt:1,2,3 / lw:2,2,1) - see gnuplot: set style line\n";
-	print "                     for -style and -color the options can be continued by anothers [@]\n";
+	print "  -style r:?T:V,V,...define line styles (exa: pt:1,2,3 / lw:2,2,1) - see gnuplot: set style line\n";
+	print "                     for -style and -color the options can be continued by anothers\n";
+	print "                     with r: the styles will be replaced - usable for multiplot [@]\n";
 	print "  -[xyz]+2?log       enable logscale [@]\n";
 	print "  -key ARG           modifiy the key (example: -key off) [@]\n";
 	print "  -cn TITLE          add column title\n";
@@ -428,9 +430,10 @@ sub readlinestyles {
 	my $args=shift;
 	my $style="lt";
 	if(@_){ $style=shift; }
-	elsif($args=~/^([^:]*):(.*)$/){
-		$style=$1." %s";
-		$args=$2;
+	elsif($args=~/^(r:)?([^:]*):(.*)$/){
+		$style=$2." %s";
+		$args=$3;
+		delete $stylecnt{$style} if ""ne$1;
 	}
 	my $gp="";
 	my @args=split /,/,$args;
