@@ -10,7 +10,9 @@ $tmpdir[0]=~s/\\/\//g;
 
 sub gettmp {
 	my $ext=shift;
-	return $tmpdir[0]."/".basename($0).".".$$.".".$ext;
+	my $prg=$0;
+	$prg=~s/\\/\//g;
+	return $tmpdir[0]."/".basename($prg).".".$$.".".$ext;
 }
 
 my $tmpdat=&gettmp("dat");
