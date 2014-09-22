@@ -3,7 +3,7 @@
 use strict;
 use File::Basename;
 
-my @tmpdir=($ENV{"TEMP"},$ENV{"TMP"},"/dev/shm","/tmp");
+my @tmpdir=($ENV{"USERPROFILE"}."\\AppData\\Local\\Temp",$ENV{"TEMP"},$ENV{"TMP"},"/dev/shm","/tmp");
 while(@tmpdir && ! -d $tmpdir[0]){ shift @tmpdir; }
 die "No temporary directory found" if !@tmpdir;
 $tmpdir[0]=~s/\\/\//g;
