@@ -135,10 +135,10 @@ while(1){
 	elsif($ARGV[0]eq"-nox"       ){ shift; $colxy  =-1;      }
 	elsif($ARGV[0]eq"-col"       ){ shift; $coln   =shift;   }
 	elsif($ARGV[0]=~/^-(x?)multiplot([0-9.]+)?$/ ){ shift; $multiplot=shift; $xmultiplot="x"eq$1; $multiplotr=$2 if ""ne$2; }
-	elsif($ARGV[0]=~/^-([xy])range$r$/){ shift; &gpcfg("set $1range [".(shift)."]\n",$3,0); }
+	elsif($ARGV[0]=~/^-([xy]|cb)range$r$/){ shift; &gpcfg("set $1range [".(shift)."]\n",$3,0); }
 	elsif($ARGV[0]=~/^-([xy])grid$r$/ ){ shift; &gpcfg("set grid $1tics\n",$3,0); }
-	elsif($ARGV[0]=~/^-([xy]2?tics)([ar]?)$r$/){ shift; &gpcfg(&readtics($1,$2,shift),$4,0); }
-	elsif($ARGV[0]=~/^-([xy]2?label)$r$/){ shift; &gpcfg("set ".$1." \"".(shift)."\"\n",$3,-1); }
+	elsif($ARGV[0]=~/^-(([xy]|cb)2?tics)([ar]?)$r$/){ shift; &gpcfg(&readtics($1,$3,shift),$5,0); }
+	elsif($ARGV[0]=~/^-(([xy]|cb)2?label)$r$/){ shift; &gpcfg("set ".$1." \"".(shift)."\"\n",$4,-1); }
 	elsif($ARGV[0]eq"-title"     ){ shift; $gpcfg[0].="set title \"".(shift)."\"\n"; $gpcfg[1].="unset title\n"; }
 	elsif($ARGV[0]eq"-size"      ){ shift; $size   =shift;   }
 	elsif($ARGV[0]eq"-xsize"     ){ shift; $outopt.=" size ".(shift);   }
@@ -230,16 +230,16 @@ sub usage {
 	print "  -col N             use N data columns (for block width in -blk mode, or err-bar in -blke)\n";
 	print "  -x?multiplotR? N   use every N columns for a new subplot in x or y (default) direction\n";
 	print "                     R is an optional amount of space to use for the common axis (default: 0.1)\n";
-	print "  -[xy]range MIN:MAX define [xy]-axis range [@]\n";
-	print "  -[xy]2?tics[ar]? P:L|L|P:,...\n";
+	print "  -[xy(cb)]range MIN:MAX define [xy(cb)]-axis range [@]\n";
+	print "  -[xy(cb)]2?tics[ar]? P:L|L|P:,...\n";
 	print "                     places labels L at position P (\"0.5:hallo,0.8:welt\" or \"hallo,welt\") [@]\n";
 	print "                     by obmitting position (L), the labels are placed at 0,1,2,...\n";
 	print "                     by obmitting label (P:), the positions are used\n";
 	print "                     prefix a specifies to add labels, r to replace (default is first replace than add)\n";
 	print "                     to put a \",\" in the label you can use \";;\"\n";
-	print "  -[xy]2?tics[ar]? S:I:E\n";
+	print "  -[xy(cb)]2?tics[ar]? S:I:E\n";
 	print "                     places labels beginning at position S with increment I up to E [@]\n";
-	print "  -[xy]2?label TXT label for x/y/x2/y2-axis [@]\n";
+	print "  -[xy(cb)]2?label TXT label for x/y/x2/y2-axis [@]\n";
 	print "  -[xy]grid          [xy]-axis grid [@]\n";
 	print "  -size W,H          set drawing size for gnuplot\n";
 	print "  -xsize W,H         set output size of drawing in pixels (for eps use: Wcm,Hcm)\n";
