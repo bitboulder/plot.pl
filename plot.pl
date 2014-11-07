@@ -237,8 +237,9 @@ sub usage {
 	print "                     by obmitting label (P:), the positions are used\n";
 	print "                     prefix a specifies to add labels, r to replace (default is first replace than add)\n";
 	print "                     to put a \",\" in the label you can use \";;\"\n";
-	print "  -[xy(cb)]2?tics[ar]? S:I:E\n";
-	print "                     places labels beginning at position S with increment I up to E [@]\n";
+	print "  -[xy(cb)]2?tics[ar]? S:I:E | S:I/R:E\n";
+	print "                     places labels beginning at position S with increment I up to E\n";
+	print "                     with R the position is multiplied with R [@]\n";
 	print "  -[xy(cb)]2?label TXT label for x/y/x2/y2-axis [@]\n";
 	print "  -[xy]grid          [xy]-axis grid [@]\n";
 	print "  -size W,H          set drawing size for gnuplot\n";
@@ -409,12 +410,21 @@ sub readtics {
 	my @gp=();
 	my $i=0;
 	$name.=" add" if "a"eq$typ;
-	if($tics=~/^(-?[0-9.]*):([0-9.]+):(-?[0-9.]*)$/){
-		my $res=$2;
-		die "label-end set but start obmitted for $name" if ""eq$1 && ""ne$3;
-		$res=$1.",".$res if ""ne$1;
-		$res.=",".$3 if ""ne$3;
-		return "set ".$name." ".$res."\n";
+	if($tics=~/^(-?[0-9.]*):([0-9.]+)(\/([0-9.]+))?:(-?[0-9.]*)$/){
+		(my $s,my $i,my $r,my $e)=($1,$2,$4,$5);
+		if(""eq$r){
+			my $res=$i;
+			die "label-end set but start obmitted for $name" if ""eq$s && ""ne$e;
+			$res=$s.",".$res if ""ne$s;
+			$res.=",".$e if ""ne$e;
+			return "set ".$name." ".$res."\n";
+		}else{
+			die "label-rate set but start,inc or end obmitted for $name" if ""eq$s || ""eq$i || ""eq$e;
+			my @res=();
+			for(my $v=$s;$v<=$e;$v+=$i){ push @res,"\"$v\" ".($v*$r); }
+			print STDERR "set ".$name." ( ".(join ",",@res)." )\n";
+			return "set ".$name." ( ".(join ",",@res)." )\n";
+		}
 	}else{
 		foreach my $xtic (split /,/,$tics){
 			my @poslab=split /:/,$xtic,2;
