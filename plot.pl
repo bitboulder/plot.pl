@@ -422,7 +422,6 @@ sub readtics {
 			die "label-rate set but start,inc or end obmitted for $name" if ""eq$s || ""eq$i || ""eq$e;
 			my @res=();
 			for(my $v=$s;$v<=$e;$v+=$i){ push @res,"\"$v\" ".($v*$r); }
-			print STDERR "set ".$name." ( ".(join ",",@res)." )\n";
 			return "set ".$name." ( ".(join ",",@res)." )\n";
 		}
 	}else{
