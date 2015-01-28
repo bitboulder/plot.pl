@@ -88,7 +88,7 @@ while(<STDIN>){
 		$_=$1;
 		my $arg=$2;
 		if(defined $demfix){ $demfix.=$arg."\n"; }else{
-			my @arg = $arg=~/^-/ && $arg!~/ -/ ? (split / +/,$arg,2) : (split / +/,$arg);
+			my @arg = $arg=~/^-/ && $arg!~/[\t ]-/ ? (split /[\t ]+/,$arg,2) : (split /[\t ]+/,$arg);
 			foreach(@arg){
 				$_=~s/__/ /g;
 				push @ARGV,$_;
