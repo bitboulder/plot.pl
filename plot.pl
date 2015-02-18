@@ -411,7 +411,7 @@ sub readtics {
 	my @gp=();
 	my $i=0;
 	$name.=" add" if "a"eq$typ;
-	if($tics=~/^(-?[0-9.]*):([0-9.]+)(\/([0-9.]+))?([+-][0-9.]+)?:(-?[0-9.]*)$/){
+	if($tics=~/^(-?[0-9.]*):([0-9.]+)(\/(-?[0-9.]+))?([+-][0-9.]+)?:(-?[0-9.]*)$/){
 		(my $s,my $i,my $r,my $o,my $e)=($1,$2,$4,$5,$6);
 		if(""eq$r && ""eq$o){
 			my $res=$i;
@@ -424,7 +424,7 @@ sub readtics {
 			$r=1 if ""eq$r;
 			$o=0 if ""eq$o;
 			my @res=();
-			for(my $v=$s;$v<=$e;$v+=$i){ push @res,"\"$v\" ".($v*$r+$o); }
+			for(my $v=$s;$v<=$e;$v+=$i){ push @res,"\"".((sprintf "%.5e",$v)+0)."\" ".($v*$r+$o); }
 			return "set ".$name." ( ".(join ",",@res)." )\n";
 		}
 	}else{
