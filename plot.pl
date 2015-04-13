@@ -156,6 +156,7 @@ while(1){
 	elsif($ARGV[0]eq"-3"        ){ shift; $coln   =2;       }
 	elsif($ARGV[0]eq"-eps"      ){ shift; $outtyp ="eps";   }
 	elsif($ARGV[0]eq"-png"      ){ shift; $outtyp ="png"; $outtyp.=" size ".(shift); }
+	elsif($ARGV[0]eq"-trp"      ){ shift; &trp();           }
 	elsif($ARGV[0]=~/^-log$r$/   ){ shift; &gpcfg("set logscale ".(shift)."\n",$2,0); }
 	else{ last; }
 }
@@ -168,6 +169,21 @@ foreach(@dat){
 	print TMP $_;
 }
 close TMP;
+
+sub trp {
+	my @d2=();
+	foreach my $d (@dat){
+		chomp $d;
+		my @d=split /[\t ]+/,$d;
+		for(my $i=0;$i<@d;$i++){ push @{$d2[$i]},$d[$i]; }
+	}
+	$maxnum=0;
+	foreach my $d (@d2){
+		$maxnum=@{$d} if @{$d}>$maxnum;
+		$d=(join " ",@{$d})."\n";
+	}
+	@dat=@d2;
+}
 
 sub ptypinit {
 	if("imagevalue"eq$ptyp){
