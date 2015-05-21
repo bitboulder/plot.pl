@@ -136,7 +136,7 @@ while(1){
 	elsif($ARGV[0]eq"-col"       ){ shift; $coln   =shift;   }
 	elsif($ARGV[0]=~/^-(x?)multiplot([0-9.]+)?$/ ){ shift; $multiplot=shift; $xmultiplot="x"eq$1; $multiplotr=$2 if ""ne$2; }
 	elsif($ARGV[0]=~/^-([xy]|cb)range$r$/){ shift; &gpcfg("set $1range [".(shift)."]\n",$3,0); }
-	elsif($ARGV[0]=~/^-([xy])grid$r$/ ){ shift; &gpcfg("set grid $1tics\n",$3,0); }
+	elsif($ARGV[0]=~/^-([xy]2?)grid$r$/ ){ shift; &gpcfg("set grid $1tics\n",$3,0); }
 	elsif($ARGV[0]=~/^-(([xy]|cb)2?tics)([ar]?)$r$/){ shift; &gpcfg(&readtics($1,$3,shift),$5,0); }
 	elsif($ARGV[0]=~/^-(([xy]|cb)2?label)$r$/){ shift; &gpcfg("set ".$1." \"".(shift)."\"\n",$4,-1); }
 	elsif($ARGV[0]eq"-title"     ){ shift; $gpcfg[0].="set title \"".(shift)."\"\n"; $gpcfg[1].="unset title\n"; }
@@ -258,7 +258,7 @@ sub usage {
 	print "                     with R the position is multiplied with R\n";
 	print "                     with O the position is offset [@]\n";
 	print "  -[xy(cb)]2?label TXT label for x/y/x2/y2-axis [@]\n";
-	print "  -[xy]grid          [xy]-axis grid [@]\n";
+	print "  -[xy]2?grid        [xy]-axis grid [@]\n";
 	print "  -size W,H          set drawing size for gnuplot\n";
 	print "  -xsize W,H         set output size of drawing in pixels (for eps use: Wcm,Hcm)\n";
 	print "  -color C,C,...     define colors (exa: ff0000,00ff000) [@]\n";
