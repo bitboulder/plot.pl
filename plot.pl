@@ -20,7 +20,7 @@ my $tmpdem=&gettmp("dem");
 my $outdem=0;
 my $maxnum=0;
 
-my %outtyps=("x11"=>"", "eps"=>"postscript eps", "tex"=>"epslatex", "pdf"=>"pdf", "png"=>"png", "jpg"=>"jpeg", "plot"=>"plot", "dem"=>"");
+my %outtyps=("x11"=>"", "eps"=>"postscript eps", "tex"=>"epslatex", "pdf"=>"pdf", "png"=>"png", "jpg"=>"jpeg", "plot"=>"plot", "dem"=>"", "svg"=>"svg");
 my %outopts=(           "eps"=>"color",          "tex"=>"color");
 my $outtyp="x11";
 my $outbase="plot";
