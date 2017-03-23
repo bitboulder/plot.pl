@@ -81,29 +81,41 @@ $outtyps{$outtyp}="x11" if ""eq$outtyps{$outtyp};
 
 my @dat=();
 my $i=0;
-while(<STDIN>){
-	$_=~s/[\n\r]+$//g;
-	$_=~s/#[#!].*//;
-	if($_=~/^([^#]*)#(.*)$/){
-		$_=$1;
-		my $arg=$2;
-		if(defined $demfix){ $demfix.=$arg."\n"; }else{
-			my @arg = $arg=~/^-/ && $arg!~/[\t ]-/ ? (split /[\t ]+/,$arg,2) : (split /[\t ]+/,$arg);
-			foreach(@arg){
-				$_=~s/__/ /g;
-				push @ARGV,$_;
-			}
-		}
-	}
-	$_=~s/^ +//g;
-	$_=~s/ +$//g;
-	next if ""eq$_;
-	push @dat,$_."\n";
-	my $num=split /[\t ]+/,$_;
-	$maxnum=$num if $maxnum<$num;
-}
+&parseinput(<STDIN>);
 close STDIN if ""ne$infile;
 unlink $1 if $infile=~/^(.*)\[UNLINK\]$/;
+
+sub parseinput {
+	foreach(@_){
+		$_=~s/[\n\r]+$//g;
+		$_=~s/#[#!].*//;
+		if($_=~/^([^#]*)#(.*)$/){
+			$_=$1;
+			my $arg=$2;
+			if(defined $demfix){ $demfix.=$arg."\n"; }else{
+				my @arg = $arg=~/^-/ && $arg!~/[\t ]-/ ? (split /[\t ]+/,$arg,2) : (split /[\t ]+/,$arg);
+				for(my $a=0;$a<@arg;$a++){
+					if("-inc"eq$arg[$a]){
+						next if ++$a==@arg;
+						open FD,"<".$arg[$a];
+						my @fd=<FD>;
+						close FD;
+						&parseinput(@fd);
+					}else{
+						$arg[$a]=~s/__/ /g;
+						push @ARGV,$arg[$a];
+					}
+				}
+			}
+		}
+		$_=~s/^ +//g;
+		$_=~s/ +$//g;
+		next if ""eq$_;
+		push @dat,$_."\n";
+		my $num=split /[\t ]+/,$_;
+		$maxnum=$num if $maxnum<$num;
+	}
+}
 
 if($outtyps{$outtyp}eq"plot"){
 	foreach(@ARGV){ $_=~s/ /__/g; }
@@ -282,6 +294,7 @@ sub usage {
 	print "                     dem is a special output type which uses the previous configured one but outputs a dem- and a dat-file for gnuplot\n";
 	print "  -outopt OPT        output options (example for eps/tex: color, monochrome - see gnuplot terminal typ if supported\n";
 	print "  -dem               the dem-file is only build of every outcommented line in infile and the output options\n";
+	print "  -inc FILE          include another plot.pl script file\n";
 	print "  -c GPCFG           include file GPCFG in gnuplot script [@]\n";
 	print "  -C GPCMD           include command GPCMD in gnuplot script [@]\n";
 	print "  -plt PLTCMD        override plot command in gnuplot script [@]\n";
