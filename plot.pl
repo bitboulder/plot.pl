@@ -28,7 +28,7 @@ my $outbase="plot";
 my @gpcfg=();
 my @plt=();
 my $ptyp="lines";
-(my $nbg,my $blk,my $colxy,my $coln,my $gaps)=(0,0,0,1,0);
+(my $nbg,my $blk,my $colxy,my $coln,my $gaps,my $xyhead)=(0,0,0,1,0,"");
 my $size="";
 my $outopt="";
 my $multiplot=-1;
@@ -145,6 +145,7 @@ while(1){
 	elsif($ARGV[0]eq"-typ"       ){ shift; $ptyp=shift;   &ptypinit(); }
 	elsif($ARGV[0]eq"-xy"        ){ shift; $colxy  =1;       }
 	elsif($ARGV[0]eq"-nox"       ){ shift; $colxy  =-1;      }
+	elsif($ARGV[0]=~/^-([xy])head$/){ shift; $xyhead .=$1;     }
 	elsif($ARGV[0]eq"-gaps"      ){ shift; $gaps   =1;       }
 	elsif($ARGV[0]eq"-col"       ){ shift; $coln   =shift;   }
 	elsif($ARGV[0]=~/^-(x?)multiplot([0-9.]+)?$/ ){ shift; $multiplot=shift; $xmultiplot="x"eq$1; $multiplotr=$2 if ""ne$2; }
@@ -255,7 +256,9 @@ sub usage {
 	print "  -blke              use blocks with error bars\n";
 	print "  -blkw NUM          set absolute block width (implies -blk)\n";
 	print "  -xy                use two colums of data (x,y-values) - normaly x-values are read from the first column\n";
+	print "                     in matrix mode: use x+y-values from frist column + first row\n";
 	print "  -nox               there is no x-column in data - use line number\n";
+	print "  -[xy]head          only in matrix mode: use x or y headers from first row or column\n";
 	print "  -gaps              gaps in lines for data =\"\"\n";
 	print "  -col N             use N data columns (for block width in -blk mode, or err-bar in -blke)\n";
 	print "  -x?multiplotR? N   use every N columns for a new subplot in x or y (default) direction\n";
@@ -371,8 +374,14 @@ while($col<$maxnum){
   	my $using = ($colxy ? ++$col : 1);
     for(my $i=0;$i<$coln;$i++){ $using.=":".($gaps?"(\$":"").(++$col).($gaps?")":""); }
   	$dem.=" \"".$tmpdat."\"";
-	$dem.=" matrix" if $matrix;
-	$dem.=" using ".$using if !$matrix;
+	if($matrix){
+		$dem.=" nonuniform" if $colxy>0 && ""eq$xyhead;
+		$dem.=" matrix";
+		$dem.=" columnheaders" if $xyhead=~/x/;
+		$dem.=" rowheaders" if $xyhead=~/y/;
+	}else{
+		$dem.=" using ".$using if !$matrix;
+	}
   	$dem.=" title \"".$title."\"";
   	$dem.=" with ".$ptyp;
   	$dem.=" ls ".($ls++) if !$matrix;
